@@ -12,11 +12,18 @@ class Game:
         self.worker_grid = [[],[],[],[],[],[],[],[],[],[]]
         self.gold = 0
         self.pop = 1
-        self.pop_lbl = ''
+        self.place_pop = 0
+        self.food = 0
+        self.wood = 0
+        self.iron = 0
         self.placing = False
         self.removing = False
         self.startxy = [1,1]
-        
+
+        for row in range(10):
+            for col in range(10):
+                self.worker_grid[row].append(False)
+                
         for row in self.grid:
             for i in range(10):
                 rs,qt = randint(1,3),randint(1,3)
@@ -31,10 +38,16 @@ class Game:
                 row.append(str(qt)+rs)
         self.bgrid = []
         self.gold_lbl = Label(frame,text='Gold: '+str(self.gold))
-        self.gold_lbl.grid(row=1,column=1,columnspan=3)
+        self.gold_lbl.grid(row=1,column=1,columnspan=2)
         self.pop_lbl = Label(frame,text='Population: '+str(self.pop))
-        self.pop_lbl.grid(row=1,column=4,columnspan=3)
-        print(self.gold_lbl.grid_info())
+        self.pop_lbl.grid(row=1,column=3,columnspan=2)
+        self.food_lbl = Label(frame,text='Food: '+str(self.food))
+        self.food_lbl.grid(row=1,column=5,columnspan=2)
+        self.wood_lbl = Label(frame,text='Wood: '+str(self.wood))
+        self.wood_lbl.grid(row=1,column=7,columnspan=2)
+        self.iron_lbl = Label(frame,text='Iron: '+str(self.iron))
+        self.iron_lbl.grid(row=1,column=9,columnspan=2)
+
         self.it = 1
         for item in self.grid:
             self.ct = 1
@@ -57,6 +70,7 @@ class Game:
         self.remove_btn.grid(column=3,row=12,columnspan=2)
         self.end_btn = Button(frame, text='End Turn', width=14, height=3, command=self.end)
         self.end_btn.grid(column=5,row=12,columnspan=2)
+        self.bgcolor = self.end_btn.cget('background')
 
     def is_touching(self,points,test_coord): #points should be a list
         return_tf = False
@@ -78,22 +92,42 @@ class Game:
             print(row,col)
             print(self.grid[row][col])
             if self.placing and not self.worker_grid[row][col]:
+                self.placing = False
                 self.worker_grid[row][col] = True
+                self.place_pop += 1
+                event.widget.configure(background='lightgray')
             elif self.removing and self.worker_grid[row][col]:
+                self.removing = False
                 self.worker_grid[row][col] = False
+                self.place_pop -= 1
+                event.widget.configure(background=self.bgcolor)
 
     def end(self):
         self.collect_rsc()
     
     def collect_rsc(self):
-        pass
+        for row in range(10):
+            for col in range(10):
+                if self.worker_grid[row][col]:
+                    rsc_amt = int(str(self.grid[row][col])[0])
+                    if str(self.grid[row][col])[2] == 'F':
+                        self.food = self.food + rsc_amt
+                        self.food_lbl.configure(text='Food: '+str(self.food))
+                    elif str(self.grid[row][col])[2] == 'W':
+                        self.wood = self.wood + rsc_amt
+                        self.wood_lbl.configure(text='Wood: '+str(self.wood))
+                    else:
+                        self.iron = self.iron + rsc_amt
+                        self.iron_lbl.configure(text='Iron: '+str(self.iron))
+                    
     def place(self):
-        if self.placing:
-            self.placing = False
-        else:
-            self.placing = True
-        if self.removing:
-            self.removing = False
+        if self.place_pop < self.pop:
+            if self.placing:
+                self.placing = False
+            else:
+                self.placing = True
+            if self.removing:
+                self.removing = False
 
     def remove(self):
         if self.removing:
