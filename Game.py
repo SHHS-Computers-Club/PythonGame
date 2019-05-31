@@ -104,7 +104,21 @@ class Game:
 
     def end(self):
         self.collect_rsc()
-    
+        self.pop = self.pop + int(self.food/5)
+        if self.food < self.pop:
+            self.pop = self.food
+            self.food = 0
+            if self.pop == 0:
+                root.destroy()
+                gover = Label(text='Game Over!',width=20,height=3)
+                gover.grid(row=1,column=1)
+        else:
+            self.food = self.food - self.pop
+        self.pop_lbl.configure(text='Pop: '+str(self.pop))
+        self.food_lbl.configure(text='Food: '+str(self.food))
+        self.wood_lbl.configure(text='Wood: '+str(self.wood))
+        self.iron_lbl.configure(text='Iron: '+str(self.iron))
+            
     def collect_rsc(self):
         for row in range(10):
             for col in range(10):
@@ -112,13 +126,10 @@ class Game:
                     rsc_amt = int(str(self.grid[row][col])[0])
                     if str(self.grid[row][col])[2] == 'F':
                         self.food = self.food + rsc_amt
-                        self.food_lbl.configure(text='Food: '+str(self.food))
                     elif str(self.grid[row][col])[2] == 'W':
                         self.wood = self.wood + rsc_amt
-                        self.wood_lbl.configure(text='Wood: '+str(self.wood))
                     else:
                         self.iron = self.iron + rsc_amt
-                        self.iron_lbl.configure(text='Iron: '+str(self.iron))
                     
     def place(self):
         if self.place_pop < self.pop:
