@@ -19,6 +19,7 @@ class Game:
         self.placing = False
         self.removing = False
         self.startxy = [1,1]
+        self.turn = 1
 
         for row in range(10):
             for col in range(10):
@@ -37,9 +38,11 @@ class Game:
                 
                 row.append(str(qt)+rs)
         self.bgrid = []
+        self.turn_lbl = Label(frame,text='Turn: '+str(self.turn))
+        self.turn_lbl.grid(row=1,column=1)
         self.gold_lbl = Label(frame,text='Gold: '+str(self.gold))
-        self.gold_lbl.grid(row=1,column=1,columnspan=2)
-        self.pop_lbl = Label(frame,text='Population: '+str(self.pop))
+        self.gold_lbl.grid(row=1,column=2)
+        self.pop_lbl = Label(frame,text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
         self.pop_lbl.grid(row=1,column=3,columnspan=2)
         self.food_lbl = Label(frame,text='Food: '+str(self.food))
         self.food_lbl.grid(row=1,column=5,columnspan=2)
@@ -72,6 +75,15 @@ class Game:
         self.end_btn.grid(column=5,row=12,columnspan=2)
         self.bgcolor = self.end_btn.cget('background')
 
+    def remove_workers(self):
+        for row in range(10):
+            for col in range(10):
+                if self.worker_grid[row][col]:
+                    self.worker_grid[row][col] = False
+                    self.bgrid[row][col].configure(background=self.bgcolor)
+                    self.place_pop -= 1
+        
+        
     def is_touching(self,points,test_coord): #points should be a list
         return_tf = False
         for pt in points:
@@ -80,7 +92,6 @@ class Game:
         return return_tf
 
     def get_rsc(self,event):
-        print(event.widget)
         row,col = str(event.widget)[-2],str(event.widget)[-1]
         if col == 'n':
             col = 1
@@ -89,8 +100,6 @@ class Game:
         row = int(row)
         col = (int(col)+9) % 10
         if self.reveal_grid[row][col]:
-            print(row,col)
-            print(self.grid[row][col])
             if self.placing and not self.worker_grid[row][col]:
                 self.placing = False
                 self.worker_grid[row][col] = True
@@ -104,7 +113,9 @@ class Game:
 
     def end(self):
         self.collect_rsc()
-        self.pop = self.pop + int(self.food/5)
+        if self.turn > 5:
+            death = float(0.01*randint(65,90))
+            self.pop = int(self.pop * death)
         if self.food < self.pop:
             self.pop = self.food
             self.food = 0
@@ -114,10 +125,20 @@ class Game:
                 gover.grid(row=1,column=1)
         else:
             self.food = self.food - self.pop
-        self.pop_lbl.configure(text='Pop: '+str(self.pop))
+        
+        if self.place_pop > self.pop:
+            self.remove_workers()
+            
+        print(self.food,int(self.food/5),self.pop)
+        self.pop = self.pop + int(self.food/5)
+        
+        self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
         self.food_lbl.configure(text='Food: '+str(self.food))
         self.wood_lbl.configure(text='Wood: '+str(self.wood))
         self.iron_lbl.configure(text='Iron: '+str(self.iron))
+        self.turn += 1
+        self.turn_lbl.configure(text='Turn: '+str(self.turn))
+                    
             
     def collect_rsc(self):
         for row in range(10):
