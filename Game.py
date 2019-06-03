@@ -8,6 +8,7 @@ class Game:
         frame.pack_propagate(0)
         frame.grid()
         self.grid = [[],[],[],[],[],[],[],[],[],[]]
+        self.bgrid = [[],[],[],[],[],[],[],[],[],[]]
         self.reveal_grid = [[],[],[],[],[],[],[],[],[],[]]
         self.worker_grid = [[],[],[],[],[],[],[],[],[],[]]
         self.gold = 0
@@ -37,7 +38,6 @@ class Game:
                     qt = randint(1,2)
                 
                 row.append(str(qt)+rs)
-        self.bgrid = []
         self.turn_lbl = Label(frame,text='Turn: '+str(self.turn))
         self.turn_lbl.grid(row=1,column=1)
         self.gold_lbl = Label(frame,text='Gold: '+str(self.gold))
@@ -52,19 +52,19 @@ class Game:
         self.iron_lbl.grid(row=1,column=9,columnspan=2)
 
         self.it = 1
-        for item in self.grid:
+        for row in range(10):
             self.ct = 1
-            for i in item:
+            for col in range(10):
                 if self.is_touching([[1,1]],[self.it-1,self.ct-1]):
-                    self.bgrid.append(Button(frame, text=i, width=6, height=3))
-                    self.reveal_grid[self.grid.index(item)].append(True)
-                    self.worker_grid[self.grid.index(item)].append(False)
+                    self.bgrid[row].append(Button(frame, text=self.grid[row][col], width=6, height=3))
+                    self.reveal_grid[row].append(True)
+                    self.worker_grid[row].append(False)
                 else:
-                    self.bgrid.append(Button(frame, text='',width=6, height=3))
-                    self.reveal_grid[self.grid.index(item)].append(False)
-                    self.reveal_grid[self.grid.index(item)].append(False)
-                self.bgrid[len(self.bgrid)-1].grid(row=self.it+1,column=self.ct,sticky='NSEW')
-                self.bgrid[len(self.bgrid)-1].bind("<Button-1>",self.get_rsc)
+                    self.bgrid[row].append(Button(frame, text='',width=6, height=3))
+                    self.reveal_grid[row].append(False)
+                    self.worker_grid[row].append(False)
+                self.bgrid[row][col].grid(row=self.it+1,column=self.ct,sticky='NSEW')
+                self.bgrid[row][col].bind("<Button-1>",self.get_rsc)
                 self.ct += 1
             self.it += 1
         self.placer_btn = Button(frame, text='Place worker', width=14, height=3,command=self.place)
@@ -119,25 +119,34 @@ class Game:
         if self.food < self.pop:
             self.pop = self.food
             self.food = 0
-            if self.pop == 0:
-                root.destroy()
-                gover = Label(text='Game Over!',width=20,height=3)
-                gover.grid(row=1,column=1)
         else:
             self.food = self.food - self.pop
         
         if self.place_pop > self.pop:
             self.remove_workers()
+
+        self.game = True
+        if self.pop == 0 and self.turn > 1:
+            root.destroy()
+            gover = Label(text='Game Over!',width=20,height=3)
+            gover.grid(row=1,column=1)
+            self.game = False
             
         print(self.food,int(self.food/5),self.pop)
         self.pop = self.pop + int(self.food/5)
-        
-        self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
-        self.food_lbl.configure(text='Food: '+str(self.food))
-        self.wood_lbl.configure(text='Wood: '+str(self.wood))
-        self.iron_lbl.configure(text='Iron: '+str(self.iron))
-        self.turn += 1
-        self.turn_lbl.configure(text='Turn: '+str(self.turn))
+
+        if self.game:
+            self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
+            self.food_lbl.configure(text='Food: '+str(self.food))
+            self.wood_lbl.configure(text='Wood: '+str(self.wood))
+            self.iron_lbl.configure(text='Iron: '+str(self.iron))
+            self.turn += 1
+            self.turn_lbl.configure(text='Turn: '+str(self.turn))
+
+##### Expansion #####
+##            for row in range(10):
+##                for col in range(10):                    
+
                     
             
     def collect_rsc(self):
