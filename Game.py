@@ -10,11 +10,13 @@ class Game:
         self.grid = [[],[],[],[],[],[],[],[],[],[]]
         self.bgrid = [[],[],[],[],[],[],[],[],[],[]]
         self.reveal_grid = [[],[],[],[],[],[],[],[],[],[]]
+        self.reveal_grid2 = [[],[],[],[],[],[],[],[],[],[]]
         self.worker_grid = [[],[],[],[],[],[],[],[],[],[]]
         self.gold = 0
         self.pop = 1
         self.place_pop = 0
         self.food = 0
+        self.food_list = [[],[],[]]
         self.wood = 0
         self.iron = 0
         self.placing = False
@@ -58,10 +60,12 @@ class Game:
                 if self.is_touching([[1,1]],[self.it-1,self.ct-1]):
                     self.bgrid[row].append(Button(frame, text=self.grid[row][col], width=6, height=3))
                     self.reveal_grid[row].append(True)
+                    self.reveal_grid2[row].append(True)
                     self.worker_grid[row].append(False)
                 else:
                     self.bgrid[row].append(Button(frame, text='',width=6, height=3))
                     self.reveal_grid[row].append(False)
+                    self.reveal_grid2[row].append(False)
                     self.worker_grid[row].append(False)
                 self.bgrid[row][col].grid(row=self.it+1,column=self.ct,sticky='NSEW')
                 self.bgrid[row][col].bind("<Button-1>",self.get_rsc)
@@ -119,8 +123,21 @@ class Game:
         if self.food < self.pop:
             self.pop = self.food
             self.food = 0
+            for i in self.food_list:
+                i = 0
         else:
-            self.food = self.food - self.pop
+            print(self.food_list)
+            consumption = self.food - self.pop
+            for i in self.food_list:
+                if consumption >= i:
+                    consumption = consumption - i
+                    i = 0
+                else:
+                    i = i - consumption
+                    consumption = 0
+            
+                
+            #self.food = self.food - self.pop
         
         if self.place_pop > self.pop:
             self.remove_workers()
@@ -132,7 +149,6 @@ class Game:
             gover.grid(row=1,column=1)
             self.game = False
             
-        print(self.food,int(self.food/5),self.pop)
         self.pop = self.pop + int(self.food/5)
 
         if self.game:
@@ -143,9 +159,27 @@ class Game:
             self.turn += 1
             self.turn_lbl.configure(text='Turn: '+str(self.turn))
 
-##### Expansion #####
-##            for row in range(10):
-##                for col in range(10):                    
+            for row in range(10):
+                for col in range(10):
+                    if not self.reveal_grid[row][col]:
+                        reveal = False
+                        for row_ in range(-1,2):
+                            for col_ in range(-1,2):
+                                try:
+                                    if self.worker_grid[row+row_][col+col_] and [row_,col_] != [0,0] and randint(1,2) == 1:
+                                        reveal = True
+                                except:
+                                    pass
+                                    
+
+                        if reveal:
+                            self.reveal_grid2[row][col] = True
+            for row in range(10):
+                for col in range(10):
+                    if self.reveal_grid2[row][col]:
+                        self.reveal_grid[row][col] = True
+                        self.bgrid[row][col].configure(text=self.grid[row][col])
+                        
 
                     
             
@@ -155,7 +189,19 @@ class Game:
                 if self.worker_grid[row][col]:
                     rsc_amt = int(str(self.grid[row][col])[0])
                     if str(self.grid[row][col])[2] == 'F':
-                        self.food = self.food + rsc_amt
+                        self.food_list[-1].append(rsc_amt)
+                        for i in self.food_list:
+                            print(i)
+                            i = sum(i)
+                        if len(self.food_list) > 3:
+                            del self.food_list[0]
+                        food_halflist = self.food_list[:]
+                        ###FIX###
+##                        for i in food_halflist:
+##                            i = sum(i)
+##                            print(type(i))
+##                        print(food_halflist)
+##                        self.food = sum(food_halflist)
                     elif str(self.grid[row][col])[2] == 'W':
                         self.wood = self.wood + rsc_amt
                     else:
