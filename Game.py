@@ -30,11 +30,15 @@ class Game:
                 
         for row in self.grid:
             for i in range(10):
-                rs,qt = randint(1,3),randint(1,3)
+                rs = randint(1,3)
                 if rs == 1:
                     rs = 'xFood'
+                    qt = randint(1,4)
+                    if qt == 4:
+                        qt = randint(2,3)
                 elif rs == 2:
                     rs = 'xWood'
+                    qt = randint(1,3)
                 else:
                     rs = 'xIron'
                     qt = randint(1,2)
@@ -82,7 +86,7 @@ class Game:
     def remove_workers(self):
         for row in range(10):
             for col in range(10):
-                if self.worker_grid[row][col]:
+                if self.worker_grid[row][col] and self.place_pop > self.pop:
                     self.worker_grid[row][col] = False
                     self.bgrid[row][col].configure(background=self.bgcolor)
                     self.place_pop -= 1
@@ -116,6 +120,8 @@ class Game:
                 event.widget.configure(background=self.bgcolor)
 
     def end(self):
+        self.food_list.append([])
+        del self.food_list[0]
         self.collect_rsc()
         if self.turn > 5:
             death = float(0.01*randint(65,90))
@@ -123,17 +129,17 @@ class Game:
         if self.food < self.pop:
             self.pop = self.food
             self.food = 0
-            for i in self.food_list:
-                i = 0
+            for i in range(len(self.food_list)):
+                self.food_list[i] = [0]
         else:
-            print(self.food_list)
-            consumption = self.food - self.pop
-            for i in self.food_list:
-                if consumption >= i:
-                    consumption = consumption - i
-                    i = 0
+            consumption = self.pop
+            for i in range(len(self.food_list)):
+                sum_ = sum(self.food_list[i])
+                if consumption >= sum_:
+                    consumption = consumption - sum_
+                    self.food_list[i] = [0]
                 else:
-                    i = i - consumption
+                    self.food_list[i] = [sum_ - consumption]
                     consumption = 0
             
                 
@@ -190,18 +196,10 @@ class Game:
                     rsc_amt = int(str(self.grid[row][col])[0])
                     if str(self.grid[row][col])[2] == 'F':
                         self.food_list[-1].append(rsc_amt)
-                        for i in self.food_list:
-                            print(i)
-                            i = sum(i)
-                        if len(self.food_list) > 3:
-                            del self.food_list[0]
-                        food_halflist = self.food_list[:]
-                        ###FIX###
-                        for i in range(len(food_halflist)):
-                            food_halflist[i] = sum(food_halflist[i])
-                        print(food_halflist)
-                        self.food = sum(food_halflist)
-                        #########
+                        self.food_halflist = self.food_list[:]
+                        for i in range(len(self.food_halflist)):
+                            self.food_halflist[i] = sum(self.food_halflist[i])
+                        self.food = sum(self.food_halflist)
                     elif str(self.grid[row][col])[2] == 'W':
                         self.wood = self.wood + rsc_amt
                     else:
