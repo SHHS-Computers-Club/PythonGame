@@ -197,11 +197,11 @@ class Game:
                             del self.food_list[0]
                         food_halflist = self.food_list[:]
                         ###FIX###
-##                        for i in food_halflist:
-##                            i = sum(i)
-##                            print(type(i))
-##                        print(food_halflist)
-##                        self.food = sum(food_halflist)
+                        for i in range(len(food_halflist)):
+                            food_halflist[i] = sum(food_halflist[i])
+                        print(food_halflist)
+                        self.food = sum(food_halflist)
+                        #########
                     elif str(self.grid[row][col])[2] == 'W':
                         self.wood = self.wood + rsc_amt
                     else:
