@@ -56,6 +56,11 @@ class Game:
         self.wood_lbl.grid(row=1,column=7,columnspan=2)
         self.iron_lbl = Label(frame,text='Iron: '+str(self.iron))
         self.iron_lbl.grid(row=1,column=9,columnspan=2)
+        ### MARGIN ###
+        trade_lbl = StringVar(frame)
+        trade_lbl.set("Trade")
+        trade_rsc = OptionMenu(frame, trade_lbl, "Food","Wood","Iron")
+        trade_rsc.grid(row=2,column=11,sticky='NSEW')
 
         self.it = 1
         for row in range(10):
