@@ -23,6 +23,7 @@ class Game:
         self.removing = False
         self.startxy = [1,1]
         self.turn = 1
+        self.a_reset = True
 
         for row in range(10):
             for col in range(10):
@@ -44,6 +45,7 @@ class Game:
                     qt = randint(1,2)
                 
                 row.append(str(qt)+rs)
+        
         self.turn_lbl = Label(frame,text='Turn: '+str(self.turn))
         self.turn_lbl.grid(row=1,column=1)
         self.gold_lbl = Label(frame,text='Gold: '+str(self.gold))
@@ -56,6 +58,25 @@ class Game:
         self.wood_lbl.grid(row=1,column=7,columnspan=2)
         self.iron_lbl = Label(frame,text='Iron: '+str(self.iron))
         self.iron_lbl.grid(row=1,column=9,columnspan=2)
+        ### MARGIN ###
+        self.blank_lbl = StringVar(frame)
+        self.blank_lbl.set("")
+        self.trade_lbl = StringVar(frame)
+        self.trade_lbl.set("Trade Resource")
+        self.trade_rsc = OptionMenu(frame, self.trade_lbl, "Trade: Food","Trade: Wood","Trade: Iron","Trade: Gold")
+        self.trade_rsc.grid(row=2,column=11,columnspan=2,sticky='NEW')
+        self.trade_qty_lbl = Label(frame,text='Qty:')
+        self.trade_qty_lbl.grid(row=2,column=11,sticky='WS')
+        self.trade_qty = Entry(frame, width=5)
+        self.trade_qty.grid(row=2,column=11, sticky='S')
+        self.receive_lbl = StringVar(frame)
+        self.receive_lbl.set("Receive Resource")
+        self.receive_rsc = OptionMenu(frame, self.receive_lbl, "Receive: Food","Receive: Wood","Receive: Iron","Receive: Gold")
+        self.receive_rsc.grid(row=3,column=11,columnspan=2,sticky='NEW')
+        self.receive_qty_lbl = Label(frame,text='Min:')
+        self.receive_qty_lbl.grid(row=3,column=11,sticky='WS')
+        self.receive_qty = Entry(frame, width=5)
+        self.receive_qty.grid(row=3,column=11, sticky='S')
 
         self.it = 1
         for row in range(10):
@@ -65,12 +86,11 @@ class Game:
                     self.bgrid[row].append(Button(frame, text=self.grid[row][col], width=6, height=3))
                     self.reveal_grid[row].append(True)
                     self.reveal_grid2[row].append(True)
-                    self.worker_grid[row].append(False)
                 else:
                     self.bgrid[row].append(Button(frame, text='',width=6, height=3))
                     self.reveal_grid[row].append(False)
                     self.reveal_grid2[row].append(False)
-                    self.worker_grid[row].append(False)
+                self.worker_grid[row].append(False)
                 self.bgrid[row][col].grid(row=self.it+1,column=self.ct,sticky='NSEW')
                 self.bgrid[row][col].bind("<Button-1>",self.get_rsc)
                 self.ct += 1
@@ -83,6 +103,26 @@ class Game:
         self.end_btn.grid(column=5,row=12,columnspan=2)
         self.bgcolor = self.end_btn.cget('background')
 
+        self.trade_reset = Button(frame,text='Auto-Reset: ON', width=12, command=self.auto_reset)
+        self.trade_reset.grid(row=4,column=11,sticky='NWS')
+        self.t_set = Button(frame,text='Reset', width=6, command=self.tradereset)
+        self.t_set.grid(row=4,column=12, sticky='NS')
+
+    def auto_reset(self):
+        print('auto')
+        if self.a_reset:
+            self.a_reset = False
+            self.trade_reset.configure(text='Auto-Reset: OFF')
+        else:
+            self.a_reset = True
+            self.trade_reset.configure(text='Auto-Reset: ON')
+
+    def tradereset(self):
+        self.trade_lbl.set("Trade Resource")
+        self.receive_lbl.set("Receive Resource")
+        self.trade_qty.delete(0,'end')
+        self.receive_qty.delete(0,'end')
+        
     def remove_workers(self):
         for row in range(10):
             for col in range(10):
@@ -90,7 +130,6 @@ class Game:
                     self.worker_grid[row][col] = False
                     self.bgrid[row][col].configure(background=self.bgcolor)
                     self.place_pop -= 1
-        
         
     def is_touching(self,points,test_coord): #points should be a list
         return_tf = False
@@ -111,22 +150,128 @@ class Game:
         col = (int(col)+9) % 10
         if self.reveal_grid[row][col]:
             if self.placing and not self.worker_grid[row][col]:
-                self.placing = False
                 self.worker_grid[row][col] = True
                 self.place_pop += 1
+                self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 event.widget.configure(background='lightgray')
+                if self.place_pop == self.pop:
+                    self.placing = False
             elif self.removing and self.worker_grid[row][col]:
-                self.removing = False
                 self.worker_grid[row][col] = False
                 self.place_pop -= 1
+                self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 event.widget.configure(background=self.bgcolor)
-
+                if self.place_pop == 0:
+                    self.removing = False
+    def trade(self):
+        trading = self.trade_lbl.get()
+        if trading != 'Trade Resource':
+            trading = trading[7:]
+        t_qty = self.trade_qty.get()
+        try:
+            t_qty = int(t_qty)
+        except:
+            t_qty = 0
+        receiving = self.receive_lbl.get()
+        if receiving != 'Receive Resource':
+            receiving = receiving[9:]
+        r_qty = self.receive_qty.get()
+        try:
+            r_qty = int(r_qty)
+        except:
+            r_qty = 0
+        if r_qty != 0:
+            
+            ### KEY ###
+            ## Food = 1 Unit
+            ## Wood = 2 Units
+            ## Iron = 5 Units
+            ## Gold = 100 Units
+            ## "TAX" = -10% on conversion
+            ### KEY ###
+            
+            if trading == 'Food':
+                rsc_qty = self.food
+                if receiving == 'Food':
+                    multiplier = 0.9
+                elif receiving == 'Wood':
+                    multiplier = 0.45
+                elif receiving == 'Iron':
+                    multiplier = 0.18
+                else:
+                    multiplier = 0.009
+            elif trading == 'Wood':
+                rsc_qty = self.wood
+                if receiving == 'Food':
+                    multiplier = 1.8
+                elif receiving == 'Wood':
+                    multiplier = 0.9
+                elif receiving == 'Iron':
+                    multiplier = 0.36
+                else:
+                    multiplier = 0.018
+            elif trading == 'Iron':
+                rsc_qty = self.iron
+                if receiving == 'Food':
+                    multiplier = 4.5
+                elif receiving == 'Wood':
+                    multiplier = 2.25
+                elif receiving == 'Iron':
+                    multiplier = 0.9
+                else:
+                    multiplier = 0.045
+            else:
+                rsc_qty = self.gold
+                if receiving == 'Food':
+                    multiplier = 90
+                elif receiving == 'Wood':
+                    multiplier = 45
+                elif receiving == 'Iron':
+                    multiplier = 18
+                else:
+                    multiplier = 0.9
+            true_qty = randint((int(multiplier*t_qty))-5,(int(multiplier*t_qty))+5)
+        else:
+            true_qty = 0
+            rsc_qty = 0
+        if true_qty >= r_qty:
+            r_qty = true_qty
+        else:
+            r_qty = 0
+        if r_qty != 0:
+            if trading == 'Food' and t_qty <= self.food:
+                self.food = self.food - t_qty
+                for i in range(len(self.food_list)):
+                    if t_qty <= self.food_list[i]:
+                        self.food_list[i].append(0-t_qty)
+                    else:
+                        t_qty = t_qty - sum(self.food_list[i])
+                        self.food_list[i] = [0]
+            elif trading == 'Wood' and t_qty <= self.wood:
+                self.wood = self.wood - t_qty
+            elif trading == 'Iron' and t_qty <= self.iron:
+                self.iron = self.iron - t_qty
+            elif t_qty <= self.gold:
+                self.gold = self.gold - t_qty
+        if t_qty <= rsc_qty:
+            if receiving == 'Food':
+                self.food_list[-1].append(r_qty)
+            elif receiving == 'Wood':
+                self.wood = self.wood + r_qty
+            elif receiving == 'Iron':
+                self.iron = self.iron + r_qty
+            else:
+                self.gold = self.gold + r_qty
+                   
     def end(self):
         self.food_list.append([])
         del self.food_list[0]
         self.collect_rsc()
+        self.trade() #intentionally before food consumption
         if self.turn > 5:
             death = float(0.01*randint(65,90))
+            if randint(1,1000) == 1:
+                death = float(0.09)
             self.pop = int(self.pop * death)
         if self.food < self.pop:
             self.pop = self.food
@@ -158,38 +303,37 @@ class Game:
             self.game = False
             
         self.pop = self.pop + int(self.food/5)
-
+            
         if self.game:
+            self.placing = False
+            self.removing = False
+            if self.a_reset:
+                self.trade_lbl.set("Trade Resource")
+                self.receive_lbl.set("Receive Resource")
+                self.trade_qty.delete(0,'end')
+                self.receive_qty.delete(0,'end')
             self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
+            self.gold_lbl.configure(text='Gold: '+str(self.gold))
             self.food_lbl.configure(text='Food: '+str(self.food))
             self.wood_lbl.configure(text='Wood: '+str(self.wood))
             self.iron_lbl.configure(text='Iron: '+str(self.iron))
             self.turn += 1
             self.turn_lbl.configure(text='Turn: '+str(self.turn))
-
             for row in range(10):
                 for col in range(10):
                     if not self.reveal_grid[row][col]:
-                        reveal = False
                         for row_ in range(-1,2):
                             for col_ in range(-1,2):
-                                try:
-                                    if self.worker_grid[row+row_][col+col_] and [row_,col_] != [0,0] and randint(1,2) == 1:
-                                        reveal = True
-                                except:
-                                    pass
-                                    
-
-                        if reveal:
-                            self.reveal_grid2[row][col] = True
+                                if -1 < row+row_ and row+row_ < 10 and -1 < col+col_ and col+col_ < 10:
+                                    if self.worker_grid[row+row_][col+col_]:
+                                        if randint(1,2) == 1:
+                                            self.reveal_grid2[row][col] = True
+            
             for row in range(10):
                 for col in range(10):
                     if self.reveal_grid2[row][col]:
                         self.reveal_grid[row][col] = True
                         self.bgrid[row][col].configure(text=self.grid[row][col])
-                        
-
-                    
             
     def collect_rsc(self):
         for row in range(10):
