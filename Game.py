@@ -105,6 +105,8 @@ class Game:
             col = 1
         if row == 'n' or row == 'o':
             row = 0
+        if row != 'n' and col == '0':
+            row = int(row)-1
         row = int(row)
         col = (int(col)+9) % 10
         if self.reveal_grid[row][col]:
