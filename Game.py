@@ -109,7 +109,6 @@ class Game:
                     self.bgrid[row][col].configure(background=self.bgcolor)
                     self.place_pop -= 1
         
-        
     def is_touching(self,points,test_coord): #points should be a list
         return_tf = False
         for pt in points:
@@ -138,13 +137,53 @@ class Game:
                 self.worker_grid[row][col] = False
                 self.place_pop -= 1
                 event.widget.configure(background=self.bgcolor)
-
+    def trade(self):
+        trading = self.trade_lbl.get()
+        if trading != 'Trade Resource':
+            trading = trading[7:]
+        t_qty = self.trade_qty.get()
+        #int testing
+        receiving = self.receive_lbl.get()
+        if receiving != 'Receive Resource':
+            receiving = receiving[9:]
+        r_qty = self.receive_qty.get()
+        #int testing
+        true_qty = randint(r_qty-3,r_qty+5)
+        if true_qty >= r_qty:
+            r_qty = true_qty
+        else:
+            r_qty = 0
+        print(trading, t_qty)
+        print(receiving, r_qty)
+        if trading == 'Food' and t_qty <= self.food:
+            self.food = self.food - t_qty
+        elif trading == 'Wood' and t_qty <= self.wood:
+            self.wood = self.wood - t_qty
+        elif trading == 'Iron' and t_qty <= self.iron:
+            self.iron = self.iron - t_qty
+        elif t_qty <= self.gold:
+            self.gold = self.gold - t_qty
+        if receiving == 'Food':
+            self.food = self.food + r_qty
+        elif receiving == 'Wood':
+            self.wood = self.wood + r_qty
+        elif receiving == 'Iron':
+            self.iron = self.iron + r_qty
+        else:
+            self.gold = self.gold + r_qty
+            
+            
+        #this is an easter egg
+        # ; } && we dont like your kind here!!! THIS IS SEGREGATION
+        
     def end(self):
         self.food_list.append([])
         del self.food_list[0]
         self.collect_rsc()
         if self.turn > 5:
             death = float(0.01*randint(65,90))
+            if randint(1,1000) == 1:
+                death = float(0.09)
             self.pop = int(self.pop * death)
         if self.food < self.pop:
             self.pop = self.food
@@ -176,16 +215,15 @@ class Game:
             self.game = False
             
         self.pop = self.pop + int(self.food/5)
-
+            
         if self.game:
+            self.trade()
             self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
             self.food_lbl.configure(text='Food: '+str(self.food))
             self.wood_lbl.configure(text='Wood: '+str(self.wood))
             self.iron_lbl.configure(text='Iron: '+str(self.iron))
             self.turn += 1
             self.turn_lbl.configure(text='Turn: '+str(self.turn))
-
-###FIX###
             for row in range(10):
                 for col in range(10):
                     if not self.reveal_grid[row][col]:
@@ -195,16 +233,12 @@ class Game:
                                     if self.worker_grid[row+row_][col+col_]:
                                         if randint(1,2) == 1:
                                             self.reveal_grid2[row][col] = True
-###FIX###
             
             for row in range(10):
                 for col in range(10):
                     if self.reveal_grid2[row][col]:
                         self.reveal_grid[row][col] = True
                         self.bgrid[row][col].configure(text=self.grid[row][col])
-                        
-
-                    
             
     def collect_rsc(self):
         for row in range(10):
