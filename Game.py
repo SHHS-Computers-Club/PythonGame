@@ -77,8 +77,6 @@ class Game:
         self.receive_qty_lbl.grid(row=3,column=11,sticky='WS')
         self.receive_qty = Entry(frame, width=5)
         self.receive_qty.grid(row=3,column=11, sticky='S')
-        self.trade_reset = Button(frame,text='Auto-Reset: ON', width=12, command=self.auto_reset)
-        self.trade_reset.grid(row=4,column=11,sticky='NWS')
 
         self.it = 1
         for row in range(10):
@@ -105,13 +103,26 @@ class Game:
         self.end_btn.grid(column=5,row=12,columnspan=2)
         self.bgcolor = self.end_btn.cget('background')
 
+        self.trade_reset = Button(frame,text='Auto-Reset: ON', width=12, command=self.auto_reset)
+        self.trade_reset.grid(row=4,column=11,sticky='NWS')
+        self.t_set = Button(frame,text='Reset', width=6, command=self.tradereset)
+        self.t_set.grid(row=4,column=12, sticky='NS')
+
     def auto_reset(self):
+        print('auto')
         if self.a_reset:
             self.a_reset = False
             self.trade_reset.configure(text='Auto-Reset: OFF')
         else:
             self.a_reset = True
             self.trade_reset.configure(text='Auto-Reset: ON')
+
+    def tradereset(self):
+        self.trade_lbl.set("Trade Resource")
+        self.receive_lbl.set("Receive Resource")
+        self.trade_qty.delete(0,'end')
+        self.receive_qty.delete(0,'end')
+        
     def remove_workers(self):
         for row in range(10):
             for col in range(10):
@@ -141,12 +152,14 @@ class Game:
             if self.placing and not self.worker_grid[row][col]:
                 self.worker_grid[row][col] = True
                 self.place_pop += 1
+                self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 event.widget.configure(background='lightgray')
                 if self.place_pop == self.pop:
                     self.placing = False
             elif self.removing and self.worker_grid[row][col]:
                 self.worker_grid[row][col] = False
                 self.place_pop -= 1
+                self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 event.widget.configure(background=self.bgcolor)
                 if self.place_pop == 0:
                     self.removing = False
@@ -168,16 +181,25 @@ class Game:
         except:
             r_qty = 0
         if r_qty != 0:
+            
+            ### KEY ###
+            ## Food = 1 Unit
+            ## Wood = 2 Units
+            ## Iron = 5 Units
+            ## Gold = 100 Units
+            ## "TAX" = -10% on conversion
+            ### KEY ###
+            
             if trading == 'Food':
                 rsc_qty = self.food
                 if receiving == 'Food':
                     multiplier = 0.9
                 elif receiving == 'Wood':
-                    multiplier = 0.5
+                    multiplier = 0.45
                 elif receiving == 'Iron':
-                    multiplier = 0.2
+                    multiplier = 0.18
                 else:
-                    multiplier = 0.1
+                    multiplier = 0.009
             elif trading == 'Wood':
                 rsc_qty = self.wood
                 if receiving == 'Food':
@@ -185,30 +207,30 @@ class Game:
                 elif receiving == 'Wood':
                     multiplier = 0.9
                 elif receiving == 'Iron':
-                    multiplier = 0.4
+                    multiplier = 0.36
                 else:
-                    multiplier = 0.2
+                    multiplier = 0.018
             elif trading == 'Iron':
                 rsc_qty = self.iron
                 if receiving == 'Food':
                     multiplier = 4.5
                 elif receiving == 'Wood':
-                    multiplier = 2.5
+                    multiplier = 2.25
                 elif receiving == 'Iron':
                     multiplier = 0.9
                 else:
-                    multiplier = 0.4
+                    multiplier = 0.045
             else:
                 rsc_qty = self.gold
                 if receiving == 'Food':
-                    multiplier = 9
+                    multiplier = 90
                 elif receiving == 'Wood':
-                    multiplier = 5
+                    multiplier = 45
                 elif receiving == 'Iron':
-                    multiplier = 2
+                    multiplier = 18
                 else:
                     multiplier = 0.9
-            true_qty = randint((multiplier*t_qty)-5,(multiplier*t_qty)+5)
+            true_qty = randint((int(multiplier*t_qty))-5,(int(multiplier*t_qty))+5)
         else:
             true_qty = 0
             rsc_qty = 0
@@ -219,6 +241,12 @@ class Game:
         if r_qty != 0:
             if trading == 'Food' and t_qty <= self.food:
                 self.food = self.food - t_qty
+                for i in range(len(self.food_list)):
+                    if t_qty <= self.food_list[i]:
+                        self.food_list[i].append(0-t_qty)
+                    else:
+                        t_qty = t_qty - sum(self.food_list[i])
+                        self.food_list[i] = [0]
             elif trading == 'Wood' and t_qty <= self.wood:
                 self.wood = self.wood - t_qty
             elif trading == 'Iron' and t_qty <= self.iron:
@@ -227,18 +255,14 @@ class Game:
                 self.gold = self.gold - t_qty
         if t_qty <= rsc_qty:
             if receiving == 'Food':
-                self.food = self.food + r_qty
+                self.food_list[-1].append(r_qty)
             elif receiving == 'Wood':
                 self.wood = self.wood + r_qty
             elif receiving == 'Iron':
                 self.iron = self.iron + r_qty
             else:
                 self.gold = self.gold + r_qty
-            
-            
-        #this is an easter egg
-        # ; } && we dont like your kind here!!! THIS IS SEGREGATION
-        
+                   
     def end(self):
         self.food_list.append([])
         del self.food_list[0]
