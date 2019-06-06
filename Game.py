@@ -44,6 +44,7 @@ class Game:
                     qt = randint(1,2)
                 
                 row.append(str(qt)+rs)
+        
         self.turn_lbl = Label(frame,text='Turn: '+str(self.turn))
         self.turn_lbl.grid(row=1,column=1)
         self.gold_lbl = Label(frame,text='Gold: '+str(self.gold))
@@ -55,15 +56,7 @@ class Game:
         self.wood_lbl = Label(frame,text='Wood: '+str(self.wood))
         self.wood_lbl.grid(row=1,column=7,columnspan=2)
         self.iron_lbl = Label(frame,text='Iron: '+str(self.iron))
-<<<<<<< Updated upstream
         self.iron_lbl.grid(row=1,column=9,columnspan=2)
-        ### MARGIN ###
-        trade_lbl = StringVar(frame)
-        trade_lbl.set("Trade")
-        trade_rsc = OptionMenu(frame, trade_lbl, "Food","Wood","Iron")
-        trade_rsc.grid(row=2,column=11,sticky='NSEW')
-=======
-        self.iron_lbl.grid(row=1,column=9,columnspan=3)
         ### MARGIN ###
         self.trade_lbl = StringVar(frame)
         self.trade_lbl.set("Trade Resource")
@@ -81,7 +74,6 @@ class Game:
         self.receive_qty_lbl.grid(row=3,column=11,sticky='WS')
         self.receive_qty = Entry(frame)
         self.receive_qty.grid(row=3,column=12,sticky='WES')
->>>>>>> Stashed changes
 
         self.it = 1
         for row in range(10):
@@ -91,12 +83,11 @@ class Game:
                     self.bgrid[row].append(Button(frame, text=self.grid[row][col], width=6, height=3))
                     self.reveal_grid[row].append(True)
                     self.reveal_grid2[row].append(True)
-                    self.worker_grid[row].append(False)
                 else:
                     self.bgrid[row].append(Button(frame, text='',width=6, height=3))
                     self.reveal_grid[row].append(False)
                     self.reveal_grid2[row].append(False)
-                    self.worker_grid[row].append(False)
+                self.worker_grid[row].append(False)
                 self.bgrid[row][col].grid(row=self.it+1,column=self.ct,sticky='NSEW')
                 self.bgrid[row][col].bind("<Button-1>",self.get_rsc)
                 self.ct += 1
@@ -108,6 +99,7 @@ class Game:
         self.end_btn = Button(frame, text='End Turn', width=14, height=3, command=self.end)
         self.end_btn.grid(column=5,row=12,columnspan=2)
         self.bgcolor = self.end_btn.cget('background')
+
 
     def remove_workers(self):
         for row in range(10):
@@ -131,30 +123,23 @@ class Game:
             col = 1
         if row == 'n' or row == 'o':
             row = 0
+        if row != 'n' and col == '0':
+            row = int(row)-1
         row = int(row)
         col = (int(col)+9) % 10
         if self.reveal_grid[row][col]:
             if self.placing and not self.worker_grid[row][col]:
-                print(row,col)
-                print(self.reveal_grid[row][col])
-                print(self.worker_grid[row][col])
                 self.placing = False
                 self.worker_grid[row][col] = True
                 self.place_pop += 1
                 event.widget.configure(background='lightgray')
             elif self.removing and self.worker_grid[row][col]:
-                print(self.reveal_grid[row][col])
-                print(self.worker_grid[row][col])
                 self.removing = False
                 self.worker_grid[row][col] = False
                 self.place_pop -= 1
                 event.widget.configure(background=self.bgcolor)
-        else:
-            print(row,col)
-            print(self.reveal_grid2[row][col])
 
     def end(self):
-        print(self.reveal_grid2)
         self.food_list.append([])
         del self.food_list[0]
         self.collect_rsc()
@@ -206,7 +191,7 @@ class Game:
                     if not self.reveal_grid[row][col]:
                         for row_ in range(-1,2):
                             for col_ in range(-1,2):
-                                if -1 < row+row_ and row+row_ < 11 and -1 < col+col_ and col+col_ < 11 and [row_,col_] != [0,0]:
+                                if -1 < row+row_ and row+row_ < 10 and -1 < col+col_ and col+col_ < 10:
                                     if self.worker_grid[row+row_][col+col_]:
                                         if randint(1,2) == 1:
                                             self.reveal_grid2[row][col] = True
