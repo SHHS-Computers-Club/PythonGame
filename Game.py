@@ -142,12 +142,18 @@ class Game:
         if trading != 'Trade Resource':
             trading = trading[7:]
         t_qty = self.trade_qty.get()
-        #int testing
+        try:
+            t_qty = int(t_qty)
+        except:
+            t_qty = 0
         receiving = self.receive_lbl.get()
         if receiving != 'Receive Resource':
             receiving = receiving[9:]
         r_qty = self.receive_qty.get()
-        #int testing
+        try:
+            r_qty = int(r_qty)
+        except:
+            r_qty = 0
         true_qty = randint(r_qty-3,r_qty+5)
         if true_qty >= r_qty:
             r_qty = true_qty
