@@ -52,7 +52,7 @@ class Game:
         self.gold_lbl.grid(row=1,column=2)
         self.pop_lbl = Label(frame,text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
         self.pop_lbl.grid(row=1,column=3,columnspan=2)
-        self.food_lbl = Label(frame,text='Food: '+str(self.food))
+        self.food_lbl = Label(frame,text='Food: '+str(self.food)+' ('+str(sum(self.food_list[-1]))+')')
         self.food_lbl.grid(row=1,column=5,columnspan=2)
         self.wood_lbl = Label(frame,text='Wood: '+str(self.wood))
         self.wood_lbl.grid(row=1,column=7,columnspan=2)
@@ -77,6 +77,18 @@ class Game:
         self.receive_qty_lbl.grid(row=3,column=11,sticky='WS')
         self.receive_qty = Entry(frame, width=5)
         self.receive_qty.grid(row=3,column=11, sticky='S')
+        self.receivefood = ''
+        self.receivewood = ''
+        self.receiveiron = ''
+        self.receivegold = ''
+        self.conv_to_food_lbl = Label(frame,text=self.receivefood)
+        self.conv_to_food_lbl.grid(row=4,column=11, columnspan=2, sticky='NEW')
+        self.conv_to_wood_lbl = Label(frame,text=self.receivewood)
+        self.conv_to_wood_lbl.grid(row=4,column=11, columnspan=2, sticky='SEW')
+        self.conv_to_iron_lbl = Label(frame,text=self.receiveiron)
+        self.conv_to_iron_lbl.grid(row=5, column=11, columnspan=2, sticky='NEW')
+        self.conv_to_gold_lbl = Label(frame,text=self.receivegold)
+        self.conv_to_gold_lbl.grid(row=5, column=11, columnspan=2, sticky='SEW')
 
         self.it = 1
         for row in range(10):
@@ -262,7 +274,7 @@ class Game:
                 self.iron = self.iron + r_qty
             else:
                 self.gold = self.gold + r_qty
-                   
+
     def end(self):
         self.food_list.append([])
         del self.food_list[0]
@@ -314,7 +326,7 @@ class Game:
                 self.receive_qty.delete(0,'end')
             self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
             self.gold_lbl.configure(text='Gold: '+str(self.gold))
-            self.food_lbl.configure(text='Food: '+str(self.food))
+            self.food_lbl.configure(text='Food: '+str(self.food)+' ('+str(sum(self.food_list[-1]))+')')
             self.wood_lbl.configure(text='Wood: '+str(self.wood))
             self.iron_lbl.configure(text='Iron: '+str(self.iron))
             self.turn += 1
