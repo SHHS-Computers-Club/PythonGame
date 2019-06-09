@@ -24,6 +24,7 @@ class Game:
         self.startxy = [1,1]
         self.turn = 1
         self.a_reset = True
+        self.show_conv = False
 
         for row in range(10):
             for col in range(10):
@@ -48,15 +49,15 @@ class Game:
         
         self.turn_lbl = Label(frame,text='Turn: '+str(self.turn))
         self.turn_lbl.grid(row=1,column=1)
-        self.gold_lbl = Label(frame,text='Gold: '+str(self.gold))
-        self.gold_lbl.grid(row=1,column=2)
+        self.gold_lbl = Label(frame,text='Gold: '+str(self.gold)+' (0)')
+        self.gold_lbl.grid(row=1,column=2,columnspan=2,sticky='W')
         self.pop_lbl = Label(frame,text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
         self.pop_lbl.grid(row=1,column=3,columnspan=2)
         self.food_lbl = Label(frame,text='Food: '+str(self.food)+' ('+str(sum(self.food_list[-1]))+')')
         self.food_lbl.grid(row=1,column=5,columnspan=2)
-        self.wood_lbl = Label(frame,text='Wood: '+str(self.wood))
+        self.wood_lbl = Label(frame,text='Wood: '+str(self.wood)+' (0)')
         self.wood_lbl.grid(row=1,column=7,columnspan=2)
-        self.iron_lbl = Label(frame,text='Iron: '+str(self.iron))
+        self.iron_lbl = Label(frame,text='Iron: '+str(self.iron)+' (0)')
         self.iron_lbl.grid(row=1,column=9,columnspan=2)
         ### MARGIN ###
         self.blank_lbl = StringVar(frame)
@@ -77,18 +78,6 @@ class Game:
         self.receive_qty_lbl.grid(row=3,column=11,sticky='WS')
         self.receive_qty = Entry(frame, width=5)
         self.receive_qty.grid(row=3,column=11, sticky='S')
-        self.receivefood = ''
-        self.receivewood = ''
-        self.receiveiron = ''
-        self.receivegold = ''
-        self.conv_to_food_lbl = Label(frame,text=self.receivefood)
-        self.conv_to_food_lbl.grid(row=4,column=11, columnspan=2, sticky='NEW')
-        self.conv_to_wood_lbl = Label(frame,text=self.receivewood)
-        self.conv_to_wood_lbl.grid(row=4,column=11, columnspan=2, sticky='SEW')
-        self.conv_to_iron_lbl = Label(frame,text=self.receiveiron)
-        self.conv_to_iron_lbl.grid(row=5, column=11, columnspan=2, sticky='NEW')
-        self.conv_to_gold_lbl = Label(frame,text=self.receivegold)
-        self.conv_to_gold_lbl.grid(row=5, column=11, columnspan=2, sticky='SEW')
 
         self.it = 1
         for row in range(10):
@@ -115,13 +104,20 @@ class Game:
         self.end_btn.grid(column=5,row=12,columnspan=2)
         self.bgcolor = self.end_btn.cget('background')
 
-        self.trade_reset = Button(frame,text='Auto-Reset: ON', width=12, command=self.auto_reset)
+        self.trade_reset = Button(frame,text='Auto-Reset: ON', width=12, command=self.autoreset)
         self.trade_reset.grid(row=4,column=11,sticky='NWS')
         self.t_set = Button(frame,text='Reset', width=6, command=self.tradereset)
         self.t_set.grid(row=4,column=12, sticky='NS')
+        self.show_calc = Button(frame,text='Show conversion rates', command=self.showcalc)
+        self.show_calc.grid(row=5,column=11,columnspan=2,sticky='NEW')
+        self.refresh_calc = Button(frame,text='Refresh',command=self.refreshcalc)
+        self.conv_to_food_lbl = Button(frame,text='',command=lambda:self.autoreceive('food'))
+        self.conv_to_wood_lbl = Button(frame,text='',command=lambda:self.autoreceive('wood'))
+        self.conv_to_iron_lbl = Button(frame,text='',command=lambda:self.autoreceive('iron'))
+        self.conv_to_gold_lbl = Button(frame,text='',command=lambda:self.autoreceive('gold'))
+        self.conv_error_lbl = Label(frame,text='')
 
-    def auto_reset(self):
-        print('auto')
+    def autoreset(self):
         if self.a_reset:
             self.a_reset = False
             self.trade_reset.configure(text='Auto-Reset: OFF')
@@ -134,14 +130,92 @@ class Game:
         self.receive_lbl.set("Receive Resource")
         self.trade_qty.delete(0,'end')
         self.receive_qty.delete(0,'end')
+
+    def showcalc(self):
+        if self.show_conv:
+            self.show_conv = False
+            self.show_calc.configure(text='Show conversion rates')
+            self.conv_to_food_lbl.grid_forget()
+            self.conv_to_wood_lbl.grid_forget()
+            self.conv_to_iron_lbl.grid_forget()
+            self.conv_to_gold_lbl.grid_forget()
+            self.conv_error_lbl.grid_forget()
+            self.refresh_calc.grid_forget()
+        else:
+            self.show_conv = True
+            self.show_calc.configure(text='Hide conversion rates')
+            self.refresh_calc.grid(row=5,column=11,columnspan=2,sticky='SEW')
+            self.refreshcalc()
+
+    def refreshcalc(self):
+        trading = str(self.trade_lbl.get())[7:]
+        if trading == 'esource':
+            show = False
+        t_qty = self.trade_qty.get()
+        try:
+            t_qty = int(t_qty)
+            show = True
+        except:
+            show = False
+            self.conv_to_food_lbl.grid_forget()
+            self.conv_to_wood_lbl.grid_forget()
+            self.conv_to_iron_lbl.grid_forget()
+            self.conv_to_gold_lbl.grid_forget()
+            self.conv_error_lbl.grid_forget()
+            if t_qty == '' or trading == 'esource':
+                self.conv_error_lbl.configure(text='Nothing to trade!')
+            else:
+                self.conv_error_lbl.configure(text='Could not read qty.')
+            self.conv_error_lbl.grid(row=6,column=11,columnspan=2,sticky='NEWS')
+        if show:
+            self.conv_error_lbl.grid_forget()
+            if trading == 'Food':
+                self.r_rsc = [int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.45*t_qty*0.9),int(0.45*t_qty*1.1),int(0.18*t_qty*0.9),int(0.18*t_qty*1.1),int(0.009*t_qty*0.9),int(0.009*t_qty*1.1)]
+            elif trading == 'Wood':
+                self.r_rsc = [int(1.8*t_qty*0.9),int(1.8*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.36*t_qty*0.9),int(0.36*t_qty*1.1),int(0.018*t_qty*0.9),int(0.018*t_qty*1.1)]
+            elif trading == 'Iron':
+                self.r_rsc = [int(4.5*t_qty*0.9),int(4.5*t_qty*1.1),int(2.25*t_qty*0.9),int(2.25*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.045*t_qty*0.9),int(0.045*t_qty*1.1)]
+            else:
+                self.r_rsc = [int(90*t_qty*0.9),int(90*t_qty*1.1),int(45*t_qty*0.9),int(45*t_qty*1.1),int(18*t_qty*0.9),int(18*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1)]
+            for neg in range(len(self.r_rsc)):
+                if self.r_rsc[neg] < 0:
+                    self.r_rsc[neg] = 0
+            self.conv_to_food_lbl.configure(text='Food: '+str(self.r_rsc[0])+' - '+str(self.r_rsc[1]))
+            self.conv_to_food_lbl.grid(row=6,column=11, columnspan=2, sticky='NEW')
+            self.conv_to_wood_lbl.configure(text='Wood: '+str(self.r_rsc[2])+' - '+str(self.r_rsc[3]))
+            self.conv_to_wood_lbl.grid(row=6,column=11, columnspan=2, sticky='SEW')
+            self.conv_to_iron_lbl.configure(text='Iron: '+str(self.r_rsc[4])+' - '+str(self.r_rsc[5]))
+            self.conv_to_iron_lbl.grid(row=7, column=11, columnspan=2, sticky='NEW')
+            self.conv_to_gold_lbl.configure(text='Gold: '+str(self.r_rsc[6])+' - '+str(self.r_rsc[7]))
+            self.conv_to_gold_lbl.grid(row=7, column=11, columnspan=2, sticky='SEW')
+                
+    def autoreceive(self,rsc):
+        if rsc == 'food':
+            self.receive_qty.delete(0,'end')
+            self.receive_qty.insert(0,self.r_rsc[0])
+            self.receive_lbl.set('Receive: Food')
+        elif rsc == 'wood':
+            self.receive_qty.delete(0,'end')
+            self.receive_qty.insert(0,self.r_rsc[2])
+            self.receive_lbl.set('Receive: Wood')
+        elif rsc == 'iron':
+            self.receive_qty.delete(0,'end')
+            self.receive_qty.insert(0,self.r_rsc[4])
+            self.receive_lbl.set('Receive: Iron')
+        else:
+            self.receive_qty.delete(0,'end')
+            self.receive_qty.insert(0,self.r_rsc[6])
+            self.receive_lbl.set('Receive: Gold')
         
     def remove_workers(self):
-        for row in range(10):
-            for col in range(10):
-                if self.worker_grid[row][col] and self.place_pop > self.pop:
-                    self.worker_grid[row][col] = False
-                    self.bgrid[row][col].configure(background=self.bgcolor)
-                    self.place_pop -= 1
+        for i in range(2):
+            for row in range(10):
+                for col in range(10):
+                    if self.worker_grid[row][col] and self.place_pop > self.pop:
+                        if str(self.grid[row][col])[2] != 'F' or i == 1:
+                            self.worker_grid[row][col] = False
+                            self.bgrid[row][col].configure(background=self.bgcolor)
+                            self.place_pop -= 1
         
     def is_touching(self,points,test_coord): #points should be a list
         return_tf = False
@@ -192,7 +266,7 @@ class Game:
             r_qty = int(r_qty)
         except:
             r_qty = 0
-        if r_qty != 0:
+        if r_qty > 0 and t_qty > 0:
             
             ### KEY ###
             ## Food = 1 Unit
@@ -242,7 +316,7 @@ class Game:
                     multiplier = 18
                 else:
                     multiplier = 0.9
-            true_qty = randint((int(multiplier*t_qty))-5,(int(multiplier*t_qty))+5)
+            true_qty = randint((int(multiplier*t_qty*0.9)),(int(multiplier*t_qty*1.1)))
         else:
             true_qty = 0
             rsc_qty = 0
@@ -276,6 +350,9 @@ class Game:
                 self.gold = self.gold + r_qty
 
     def end(self):
+        self.wood_c = int(self.wood)
+        self.iron_c = int(self.iron)
+        self.gold_c = int(self.gold)
         self.food_list.append([])
         del self.food_list[0]
         self.collect_rsc()
@@ -313,9 +390,9 @@ class Game:
             gover = Label(text='Game Over!',width=20,height=3)
             gover.grid(row=1,column=1)
             self.game = False
-            
+
         self.pop = self.pop + int(self.food/5)
-            
+        
         if self.game:
             self.placing = False
             self.removing = False
@@ -325,10 +402,10 @@ class Game:
                 self.trade_qty.delete(0,'end')
                 self.receive_qty.delete(0,'end')
             self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
-            self.gold_lbl.configure(text='Gold: '+str(self.gold))
+            self.gold_lbl.configure(text='Gold: '+str(self.gold)+' ('+str(self.gold-self.gold_c)+')')
             self.food_lbl.configure(text='Food: '+str(self.food)+' ('+str(sum(self.food_list[-1]))+')')
-            self.wood_lbl.configure(text='Wood: '+str(self.wood))
-            self.iron_lbl.configure(text='Iron: '+str(self.iron))
+            self.wood_lbl.configure(text='Wood: '+str(self.wood)+' ('+str(self.wood-self.wood_c)+')')
+            self.iron_lbl.configure(text='Iron: '+str(self.iron)+' ('+str(self.iron-self.iron_c)+')')
             self.turn += 1
             self.turn_lbl.configure(text='Turn: '+str(self.turn))
             for row in range(10):
