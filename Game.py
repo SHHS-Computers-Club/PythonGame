@@ -60,24 +60,6 @@ class Game:
         self.iron_lbl = Label(frame,text='Iron: '+str(self.iron)+' (0)')
         self.iron_lbl.grid(row=1,column=9,columnspan=2)
         ### MARGIN ###
-        self.blank_lbl = StringVar(frame)
-        self.blank_lbl.set("")
-        self.trade_lbl = StringVar(frame)
-        self.trade_lbl.set("Trade Resource")
-        self.trade_rsc = OptionMenu(frame, self.trade_lbl, "Trade: Food","Trade: Wood","Trade: Iron","Trade: Gold")
-        self.trade_rsc.grid(row=2,column=11,columnspan=2,sticky='NEW')
-        self.trade_qty_lbl = Label(frame,text='Qty:')
-        self.trade_qty_lbl.grid(row=2,column=11,sticky='WS')
-        self.trade_qty = Entry(frame, width=5)
-        self.trade_qty.grid(row=2,column=11, sticky='S')
-        self.receive_lbl = StringVar(frame)
-        self.receive_lbl.set("Receive Resource")
-        self.receive_rsc = OptionMenu(frame, self.receive_lbl, "Receive: Food","Receive: Wood","Receive: Iron","Receive: Gold")
-        self.receive_rsc.grid(row=3,column=11,columnspan=2,sticky='NEW')
-        self.receive_qty_lbl = Label(frame,text='Min:')
-        self.receive_qty_lbl.grid(row=3,column=11,sticky='WS')
-        self.receive_qty = Entry(frame, width=5)
-        self.receive_qty.grid(row=3,column=11, sticky='S')
 
         self.it = 1
         for row in range(10):
@@ -104,6 +86,24 @@ class Game:
         self.end_btn.grid(column=5,row=12,columnspan=2)
         self.bgcolor = self.end_btn.cget('background')
 
+        self.blank_lbl = StringVar(frame)
+        self.blank_lbl.set("")
+        self.trade_lbl = StringVar(frame)
+        self.trade_lbl.set("Trade Resource")
+        self.trade_rsc = OptionMenu(frame, self.trade_lbl, "Trade: Food","Trade: Wood","Trade: Iron","Trade: Gold")
+        self.trade_rsc.grid(row=2,column=11,columnspan=2,sticky='NEW')
+        self.trade_qty_lbl = Label(frame,text='Qty:')
+        self.trade_qty_lbl.grid(row=2,column=11,sticky='WS')
+        self.trade_qty = Entry(frame, width=5)
+        self.trade_qty.grid(row=2,column=11, sticky='S')
+        self.receive_lbl = StringVar(frame)
+        self.receive_lbl.set("Receive Resource")
+        self.receive_rsc = OptionMenu(frame, self.receive_lbl, "Receive: Food","Receive: Wood","Receive: Iron","Receive: Gold")
+        self.receive_rsc.grid(row=3,column=11,columnspan=2,sticky='NEW')
+        self.receive_qty_lbl = Label(frame,text='Min:')
+        self.receive_qty_lbl.grid(row=3,column=11,sticky='WS')
+        self.receive_qty = Entry(frame, width=5)
+        self.receive_qty.grid(row=3,column=11, sticky='S')
         self.trade_reset = Button(frame,text='Auto-Reset: ON', width=12, command=self.autoreset)
         self.trade_reset.grid(row=4,column=11,sticky='NWS')
         self.t_set = Button(frame,text='Reset', width=6, command=self.tradereset)
@@ -357,6 +357,7 @@ class Game:
         del self.food_list[0]
         self.collect_rsc()
         self.trade() #intentionally before food consumption
+        self.refreshcalc()
         if self.turn > 5:
             death = float(0.01*randint(65,90))
             if randint(1,1000) == 1:
