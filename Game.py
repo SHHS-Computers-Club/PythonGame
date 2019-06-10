@@ -3,7 +3,6 @@ from random import randint
 from datetime import datetime
 from os import path
 from inspect import getfile, currentframe
-print(path.dirname(path.abspath(getfile(currentframe()))))
 
 class Game:
     def __init__(self, master):
