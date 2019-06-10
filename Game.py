@@ -140,6 +140,7 @@ class Game:
         self.build_confirm.grid(row=4,column=13,columnspan=2,sticky='NEW')
         self.build_auto = Button(frame,text='Auto-Reset: ON',width=11,command=self.autobuild)
         self.build_auto.grid(row=5,column=13,columnspan=2,sticky='NEW')
+        self.build_auto_reset = True
         self.build_reset = Button(frame,text='Reset',command=self.resetbuild)
         self.build_reset.grid(row=5,column=13,columnspan=2,sticky='SEW')
         self.building = False
@@ -278,13 +279,23 @@ class Game:
             self.receive_lbl.set(load.receive_lbl)
             self.receive_qty.delete(0,'end')
             self.receive_qty.insert(0,load.receive_qty)
+            self.build_all = []
+            self.build_workers = []
+            for i in range(len(load.build_all)):
+                self.build_all.append(load.build_all[i])
+                self.build_workers.append(load.build_workers[i])
+            self.blist_first = int(load.blist_first)
+            self.build_drop_lbl.set(load.build_drop_lbl)
+            self.building = not load.building #intentional
+            self.confbuild()
+            if load.build_auto_reset:
+                self.build_auto_reset = True
+                self.build_auto.configure(text='Auto-Reset: ON')
+            else:
+                self.build_auto_reset = False
+                self.build_auto.configure(text='Auto-Reset: OFF')
             self.placing = False
             self.removing = False
-            if self.a_reset:
-                self.trade_lbl.set("Trade Resource")
-                self.receive_lbl.set("Receive Resource")
-                self.trade_qty.delete(0,'end')
-                self.receive_qty.delete(0,'end')
 
             self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
             self.gold_lbl.configure(text='Gold: '+str(self.gold)+' ('+str(self.gold-self.gold_c)+')')
@@ -303,6 +314,20 @@ class Game:
                         self.bgrid[row][col].configure(bg='lightgray')
                     else:
                         self.bgrid[row][col].configure(bg=self.bgcolor)
+
+            for i in range(8):
+                self.build_list[i].grid_forget()
+                if i+self.blist_first > len(self.build_all) - 1:
+                    break
+                self.build_list[i].configure(text=self.build_all[i+self.blist_first])
+                if i % 2 == 0:
+                    self.build_list[i].grid(row=9+int(i/2),column=11,columnspan=2,sticky='NEW')
+                else:
+                    self.build_list[i].grid(row=9+int(i/2),column=11,columnspan=2,sticky='SEW')
+                if self.build_workers[i]:
+                    self.build_list[i].configure(bg='lightgray')
+                else:
+                    self.build_list[i].configure(bg=self.bgcolor)
 
             self.scrdestroy(self.loadscreen)
             self.load_lbl.configure(text='Loaded File!')
@@ -363,6 +388,12 @@ class Game:
         else:
             receive_qty = self.receive_qty.get()
         file.write("receive_qty = \""+receive_qty+"\"\n")
+        file.write("build_all = "+str(self.build_all)+"\n")
+        file.write("build_workers = "+str(self.build_workers)+"\n")
+        file.write("blist_first = "+str(self.blist_first)+"\n")
+        file.write("build_drop_lbl = \""+self.build_drop_lbl.get()+"\"\n")
+        file.write("building = "+str(self.building)+"\n")
+        file.write("build_auto_reset = "+str(self.build_auto_reset)+"\n")
         file.close()
         self.scrdestroy(self.savescreen)
         self.confirm = Tk()
@@ -393,10 +424,25 @@ class Game:
         self.receive_qty.delete(0,'end')
 
     def autobuild(self):
-        pass
+        if self.build_auto_reset:
+            self.build_auto_reset = False
+            self.build_auto.configure(text='Auto-Reset: OFF')
+        else:
+            self.build_auto_reset = True
+            self.build_auto.configure(text='Auto-Reset: ON')
 
     def resetbuild(self):
-        pass
+        self.build_drop_lbl.set('Select Building')
+        self.build_info_desc.configure(text='')
+        self.build_info_cost_c.configure(text='')
+        self.build_info_cost_1.configure(text='')
+        self.build_info_cost_2.configure(text='')
+        self.build_info_cost_3.configure(text='')
+        if not self.turnend:
+            self.build_error.configure(text='')
+        if self.building:
+            self.confbuild()
+
     
     def showcalc(self):
         if self.show_conv:
@@ -495,7 +541,7 @@ class Game:
             show = True
         elif building == 'Mine':
             self.build_info_desc.configure(text='Allows more iron to be\ncollected on one tile.')
-            self.build_info_cost_1.configure(text='Cost:   Wood: '+str(400+50*self.buildings[2]))
+            self.build_info_cost_1.configure(text='Wood: '+str(400+50*self.buildings[2]))
             self.build_info_cost_2.configure(text='Iron: '+str(200+50*self.buildings[2]))
             self.build_info_cost_3.configure(text='Gold: '+str(int(50+50*self.buildings[2]*(1.04**self.turn))))
             show = True
@@ -582,17 +628,18 @@ class Game:
                 
     def activebuild(self,i):
         building = self.build_list[i].cget('text')
-        print(building)
         if building == 'Granary' and self.build_workers[i+self.blist_first]:
             self.build_workers[i+self.blist_first] = False
             self.place_pop -= 5
             self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
             self.build_list[i].configure(bg=self.bgcolor)
+            del self.food_list[0]
         elif building == 'Granary' and self.pop - self.place_pop >= 5:
             self.build_workers[i+self.blist_first] = True
             self.place_pop += 5
             self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
             self.build_list[i].configure(bg='lightgray')
+            self.food_list.append([])
             
         if building == 'Sawmill' and self.build_workers[i+self.blist_first]:
             self.build_workers[i+self.blist_first] = False
@@ -637,7 +684,6 @@ class Game:
                 self.build_list[i].grid_forget()
                 if i+self.blist_first <= len(self.build_all) - 1:
                     self.build_list[i].configure(text=self.build_all[i+self.blist_first])
-                    print(len(self.build_all),len(self.build_workers))
                     if self.build_workers[i+self.blist_first]:
                         self.build_list[i].configure(bg='lightgray')
                     else:
@@ -653,14 +699,27 @@ class Game:
                             self.build_list[i].grid(row=9+int(i/2),column=11,columnspan=2,sticky='SEW')
         
     def remove_workers(self):
-        for i in range(2):
-            for row in range(10):
-                for col in range(10):
-                    if self.worker_grid[row][col] and self.place_pop > self.pop:
-                        if str(self.grid[row][col])[2] != 'F' or i == 1:
-                            self.worker_grid[row][col] = False
-                            self.bgrid[row][col].configure(background=self.bgcolor)
-                            self.place_pop -= 1
+        for i in range(len(self.build_workers)):
+            if self.build_workers[i] and self.build_all[i] != 'Granary' and self.place_pop > self.pop:
+                self.build_workers[i] = False
+                self.place_pop -= 10
+        for row in range(10):
+            for col in range(10):
+                if self.worker_grid[row][col] and self.place_pop > self.pop:
+                    if str(self.grid[row][col])[2] != 'F':
+                        self.worker_grid[row][col] = False
+                        self.bgrid[row][col].configure(background=self.bgcolor)
+                        self.place_pop -= 1
+        for i in range(len(self.build_workers)):
+            if self.build_workers[i] and self.place_pop > self.pop:
+                self.build_workers[i] = False
+                self.place_pop -= 5
+        for row in range(10):
+            for col in range(10):
+                if self.worker_grid[row][col] and self.place_pop > self.pop:
+                    self.worker_grid[row][col] = False
+                    self.bgrid[row][col].configure(background=self.bgcolor)
+                    self.place_pop -= 1
         
     def is_touching(self,points,test_coord): #points should be a list
         return_tf = False
@@ -680,20 +739,16 @@ class Game:
         row = int(row)
         col = (int(col)+9) % 10
         if self.reveal_grid[row][col]:
-            if self.placing and not self.worker_grid[row][col]:
+            if self.place_pop < self.pop and not self.worker_grid[row][col]:
                 self.worker_grid[row][col] = True
                 self.place_pop += 1
                 self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 event.widget.configure(background='lightgray')
-                if self.place_pop == self.pop:
-                    self.placing = False
-            elif self.removing and self.worker_grid[row][col]:
+            elif self.worker_grid[row][col]:
                 self.worker_grid[row][col] = False
                 self.place_pop -= 1
                 self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 event.widget.configure(background=self.bgcolor)
-                if self.place_pop == 0:
-                    self.removing = False
     def trade(self):
         trading = self.trade_lbl.get()
         if trading != 'Trade Resource':
@@ -832,20 +887,18 @@ class Game:
         self.gold_c = int(self.gold)
         self.food_list.append([])
         del self.food_list[0]
+        print(self.food_list)
         self.collect_rsc()
         self.trade() #intentionally before food consumption
         self.turnend = True
         self.refreshcalc()
-        self.turnend = False
         if self.building:
             self.build()
-            self.confbuild()
-        self.build_drop_lbl.set('Select Building')
-        self.build_info_desc.configure(text='')
-        self.build_info_cost_c.configure(text='')
-        self.build_info_cost_1.configure(text='')
-        self.build_info_cost_2.configure(text='')
-        self.build_info_cost_3.configure(text='')
+        if self.build_auto_reset:
+            self.resetbuild()
+        elif self.build_info_cost_1.cget('text') != '':
+            self.buildinfo()
+        self.turnend = False
         if self.turn > 5:
             death = float(0.01*randint(65,90))
             if randint(1,1000) == 1:
