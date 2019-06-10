@@ -1,6 +1,9 @@
 from tkinter import *
 from random import randint
 from datetime import datetime
+from os import path
+from inspect import getfile, currentframe
+print(path.dirname(path.abspath(getfile(currentframe()))))
 
 class Game:
     def __init__(self, master):
@@ -163,7 +166,7 @@ class Game:
                 if i == m:
                     bad_char = True
         try:
-            f = open(self.name_enter.get()+'.py')
+            f = open(path.dirname(path.abspath(getfile(currentframe())))+'\\'+self.name_enter.get()+'.py')
             filetext = f.read()
             f.close()
             f = True
@@ -176,12 +179,16 @@ class Game:
             confirm_txt.grid(row=1,column=1,columnspan=2,rowspan=2)
             confirm_ccl = Button(self.confirm,text='No',command=lambda:self.scrdestroy(self.confirm))
             confirm_ccl.grid(row=3,column=1,sticky='NEWS')
-            confirm_yes = Button(self.confirm,text='Yes',command=self.realsave)
+            confirm_yes = Button(self.confirm,text='Yes',command=self.realconf)
             confirm_yes.grid(row=3,column=2,sticky='NEWS')
         elif self.name_enter.get().lower() == 'game.py' or bad_char:
             self.invalidfile()
         else:
             self.realsave()
+
+    def realconf(self):
+        self.scrdestroy(self.confirm)
+        self.realsave()
 
     def confload(self):
         try:
@@ -269,7 +276,7 @@ class Game:
         ok_btn.grid(row=2,column=2,sticky='NEWS')
         
     def realsave(self):
-        file = open(self.name_enter.get()+'.py','w')
+        file = open(path.dirname(path.abspath(getfile(currentframe())))+'\\'+self.name_enter.get()+'.py','w')
         file.write('grid = '+str(self.grid)+'\n')
         file.write('worker_grid = '+str(self.worker_grid)+'\n')
         file.write('reveal_grid = '+str(self.reveal_grid)+'\n')
@@ -301,7 +308,6 @@ class Game:
         file.write("receive_qty = \""+receive_qty+"\"\n")
         file.close()
         self.scrdestroy(self.savescreen)
-        self.scrdestroy(self.confirm)
         self.confirm = Tk()
         self.confirm.title('')
         error_txt = Label(self.confirm,text='Saved!',width=6)
