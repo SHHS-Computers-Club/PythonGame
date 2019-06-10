@@ -1,5 +1,7 @@
 from tkinter import *
 from random import randint
+from datetime import datetime
+
 class Game:
     def __init__(self, master):
         root.title('Game')
@@ -25,10 +27,6 @@ class Game:
         self.turn = 1
         self.a_reset = True
         self.show_conv = False
-
-        for row in range(10):
-            for col in range(10):
-                self.worker_grid[row].append(False)
                 
         for row in self.grid:
             for i in range(10):
@@ -51,15 +49,18 @@ class Game:
         self.turn_lbl.grid(row=1,column=1)
         self.gold_lbl = Label(frame,text='Gold: '+str(self.gold)+' (0)')
         self.gold_lbl.grid(row=1,column=2,columnspan=2,sticky='W')
+        self.gold_c = 0
         self.pop_lbl = Label(frame,text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
         self.pop_lbl.grid(row=1,column=3,columnspan=2)
         self.food_lbl = Label(frame,text='Food: '+str(self.food)+' ('+str(sum(self.food_list[-1]))+')')
         self.food_lbl.grid(row=1,column=5,columnspan=2)
         self.wood_lbl = Label(frame,text='Wood: '+str(self.wood)+' (0)')
         self.wood_lbl.grid(row=1,column=7,columnspan=2)
+        self.wood_c = 0
         self.iron_lbl = Label(frame,text='Iron: '+str(self.iron)+' (0)')
         self.iron_lbl.grid(row=1,column=9,columnspan=2)
-        ### MARGIN ###
+        self.iron_c = 0
+        self.load_lbl = Label(frame,text='',fg='red')
 
         self.it = 1
         for row in range(10):
@@ -84,6 +85,10 @@ class Game:
         self.remove_btn.grid(column=3,row=12,columnspan=2)
         self.end_btn = Button(frame, text='End Turn', width=14, height=3, command=self.end)
         self.end_btn.grid(column=5,row=12,columnspan=2)
+        self.save_btn = Button(frame, text='Save', width=14, height=3, command=self.save)
+        self.save_btn.grid(row=12, column=7, columnspan=2)
+        self.load_btn = Button(frame, text='Load', width=14, height=3, command=self.load)
+        self.load_btn.grid(row=12, column=9, columnspan=2)
         self.bgcolor = self.end_btn.cget('background')
 
         self.blank_lbl = StringVar(frame)
@@ -116,6 +121,193 @@ class Game:
         self.conv_to_iron_lbl = Button(frame,text='',command=lambda:self.autoreceive('iron'))
         self.conv_to_gold_lbl = Button(frame,text='',command=lambda:self.autoreceive('gold'))
         self.conv_error_lbl = Label(frame,text='')
+
+    def save(self):
+        self.savescreen = Tk()
+        self.savescreen.title('Save')
+        name_lbl = Label(self.savescreen,text='File name:',width=10)
+        name_lbl.grid(row=1,column=1)
+        ctime = str(datetime.now())
+        for i in range(len(ctime)):
+            if ctime[i] == '.':
+                ctime = ctime[:i]
+                break
+            if ctime[i] == ' ':
+                ctime = ctime[:i]+'~'+ctime[i+1:]
+            elif ctime[i] == ':':
+                ctime = ctime[:i]+'-'+ctime[i+1:]
+        self.name_enter = Entry(self.savescreen,width=20)
+        self.name_enter.grid(row=1,column=2)
+        self.name_enter.insert(0,ctime)
+        save_cancel = Button(self.savescreen,text='Cancel',command=lambda:self.scrdestroy(self.savescreen))
+        save_cancel.grid(row=2,column=1,sticky='NEWS')
+        save_ok = Button(self.savescreen,text='Save',command=self.confsave)
+        save_ok.grid(row=2,column=2,sticky='NEWS')
+
+    def load(self):
+        self.loadscreen = Tk()
+        self.loadscreen.title('Load')
+        name_lbl = Label(self.loadscreen,text='File name:',width=10)
+        name_lbl.grid(row=1,column=1)
+        self.name_enter = Entry(self.loadscreen,width=20)
+        self.name_enter.grid(row=1,column=2)
+        load_cancel = Button(self.loadscreen,text='Cancel',command=lambda:self.scrdestroy(self.loadscreen))
+        load_cancel.grid(row=2,column=1,sticky='SEWN')
+        load_ok = Button(self.loadscreen,text='Load',command=self.confload)
+        load_ok.grid(row=2,column=2,sticky='SEWN')
+        
+    def confsave(self):
+        bad_char = False
+        for i in self.name_enter.get():
+            for m in '.<>:"/\\|?*':
+                if i == m:
+                    bad_char = True
+        try:
+            f = open(self.name_enter.get()+'.py')
+            filetext = f.read()
+            f.close()
+            f = True
+        except:
+            f = False
+        if f and self.name_enter.get().lower() != 'game.py':
+            self.confirm = Tk()
+            self.confirm.title('')
+            confirm_txt = Label(self.confirm,text='A file with this name already exists.\nAre you sure you want to overwrite it?')
+            confirm_txt.grid(row=1,column=1,columnspan=2,rowspan=2)
+            confirm_ccl = Button(self.confirm,text='No',command=lambda:self.scrdestroy(self.confirm))
+            confirm_ccl.grid(row=3,column=1,sticky='NEWS')
+            confirm_yes = Button(self.confirm,text='Yes',command=self.realsave)
+            confirm_yes.grid(row=3,column=2,sticky='NEWS')
+        elif self.name_enter.get().lower() == 'game.py' or bad_char:
+            self.invalidfile()
+        else:
+            self.realsave()
+
+    def confload(self):
+        try:
+            load = __import__(self.name_enter.get())
+            for row in range(10):
+                for col in range(10):
+                    self.grid[row][col] = load.grid[row][col]
+                    self.worker_grid[row][col] = load.worker_grid[row][col]
+                    self.reveal_grid[row][col] = load.reveal_grid[row][col]
+                    self.reveal_grid2[row][col] = load.reveal_grid2[row][col]
+            self.pop = int(load.pop)
+            self.place_pop = int(load.place_pop)
+            self.gold = int(load.gold)
+            self.gold_c = int(load.gold_c)
+            self.food = int(load.food)
+            for m in range(len(load.food_list)):
+                for n in range(len(load.food_list[m])):
+                    self.food_list[m][n] = load.food_list[m][n]
+            self.wood = int(load.wood)
+            self.wood_c = int(load.wood_c)
+            self.iron = int(load.iron)
+            self.iron_c = int(load.iron_c)
+            self.turn = int(load.turn)
+            if load.a_reset:
+                self.a_reset = True
+            else:
+                self.a_reset = False
+            if load.show_conv:
+                self.show_conv = True
+            else:
+                self.show_conv = False
+            self.trade_lbl.set(load.trade_lbl)
+            self.trade_qty.delete(0,'end')
+            self.trade_qty.insert(0,load.trade_qty)
+            self.receive_lbl.set(load.receive_lbl)
+            self.receive_qty.delete(0,'end')
+            self.receive_qty.insert(0,load.receive_qty)
+            self.placing = False
+            self.removing = False
+            if self.a_reset:
+                self.trade_lbl.set("Trade Resource")
+                self.receive_lbl.set("Receive Resource")
+                self.trade_qty.delete(0,'end')
+                self.receive_qty.delete(0,'end')
+
+            self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
+            self.gold_lbl.configure(text='Gold: '+str(self.gold)+' ('+str(self.gold-self.gold_c)+')')
+            self.food_lbl.configure(text='Food: '+str(self.food)+' ('+str(sum(self.food_list[-1]))+')')
+            self.wood_lbl.configure(text='Wood: '+str(self.wood)+' ('+str(self.wood-self.wood_c)+')')
+            self.iron_lbl.configure(text='Iron: '+str(self.iron)+' ('+str(self.iron-self.iron_c)+')')
+            self.turn_lbl.configure(text='Turn: '+str(self.turn))
+            
+            for row in range(10):
+                for col in range(10):
+                    if load.reveal_grid[row][col]:
+                        self.bgrid[row][col].configure(text=self.grid[row][col])
+                    else:
+                        self.bgrid[row][col].configure(text='')
+                    if load.worker_grid[row][col]:
+                        self.bgrid[row][col].configure(bg='lightgray')
+                    else:
+                        self.bgrid[row][col].configure(bg=self.bgcolor)
+        except:
+            self.invalidfile()
+        self.load_lbl.configure(text='Loaded File!')
+        self.load_lbl.grid(row=1,column=11,columnspan=2)
+            
+    def scrdestroy(self,screen):
+        try:
+            screen.destroy()
+            screen = False
+        except:
+            pass
+        
+    def invalidfile(self):
+        self.confirm = Tk()
+        self.confirm.title('')
+        L_margin = Label(self.confirm,text='', width=2)
+        L_margin.grid(row=1,column=1)
+        R_margin = Label(self.confirm,text='',width=2)
+        R_margin.grid(row=1,column=3)
+        error_txt = Label(self.confirm,text='Invalid file name!')
+        error_txt.grid(row=1,column=2)
+        ok_btn = Button(self.confirm,text='OK',command=lambda:self.scrdestroy(self.confirm))
+        ok_btn.grid(row=2,column=2,sticky='NEWS')
+        
+    def realsave(self):
+        file = open(self.name_enter.get()+'.py','w')
+        file.write('grid = '+str(self.grid)+'\n')
+        file.write('worker_grid = '+str(self.worker_grid)+'\n')
+        file.write('reveal_grid = '+str(self.reveal_grid)+'\n')
+        file.write('reveal_grid2 = '+str(self.reveal_grid2)+'\n')
+        file.write('pop = '+str(self.pop)+'\n')
+        file.write('place_pop = '+str(self.place_pop)+'\n')
+        file.write('gold = '+str(self.gold)+'\n')
+        file.write('gold_c = '+str(self.gold_c)+'\n')
+        file.write('food = '+str(self.food)+'\n')
+        file.write('food_list = '+str(self.food_list)+'\n')
+        file.write('wood = '+str(self.wood)+'\n')
+        file.write('wood_c = '+str(self.wood_c)+'\n')
+        file.write('iron = '+str(self.iron)+'\n')
+        file.write('iron_c = '+str(self.iron_c)+'\n')
+        file.write('turn = '+str(self.turn)+'\n')
+        file.write('a_reset = '+str(self.a_reset)+'\n')
+        file.write('show_conv = '+str(self.show_conv)+'\n')
+        file.write("trade_lbl = \""+self.trade_lbl.get()+"\"\n")
+        if self.trade_qty.get() == '':
+            trade_qty = ''
+        else:
+            trade_qty = self.trade_qty.get()
+        file.write("trade_qty = \""+trade_qty+"\"\n")
+        file.write("receive_lbl = \""+self.receive_lbl.get()+"\"\n")
+        if self.receive_qty.get() == '':
+            receive_qty = ''
+        else:
+            receive_qty = self.receive_qty.get()
+        file.write("receive_qty = \""+receive_qty+"\"\n")
+        file.close()
+        self.scrdestroy(self.savescreen)
+        self.scrdestroy(self.confirm)
+        self.confirm = Tk()
+        self.confirm.title('')
+        error_txt = Label(self.confirm,text='Saved!',width=6)
+        error_txt.grid(row=1,column=1,padx=35)
+        ok_btn = Button(self.confirm,text='OK',command=lambda:self.scrdestroy(self.confirm))
+        ok_btn.grid(row=2,column=1,sticky='NEWS',padx=35)
 
     def autoreset(self):
         if self.a_reset:
