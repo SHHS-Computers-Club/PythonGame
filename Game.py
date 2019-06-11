@@ -32,7 +32,7 @@ class Game:
         self.turnend = False
         self.a_reset = True
         self.show_conv = False
-        
+
         for row in self.grid:
             for i in range(10):
                 rs = randint(1,3)
@@ -49,7 +49,7 @@ class Game:
                     qt = randint(1,2)
                 
                 row.append(str(qt)+rs)
-        
+
         self.turn_lbl = Label(self.frame,text='Turn: '+str(self.turn))
         self.turn_lbl.grid(row=1,column=1,columnspan=2,sticky='W')
         self.gold_lbl = Label(self.frame,text='Gold: '+str(self.gold)+' (0)')
@@ -199,6 +199,7 @@ class Game:
         self.loadscreen = Tk()
         self.loadscreen.title('Load')
         self.loadscreen.resizable(width=False,height=False)
+
         name_lbl = Label(self.loadscreen,text='File name:',width=10)
         name_lbl.grid(row=1,column=1)
         self.name_enter = Entry(self.loadscreen,width=20)
@@ -216,6 +217,7 @@ class Game:
                     bad_char = True
         try:
             f = open(path.dirname(path.abspath(getfile(currentself.frame())))+'\\'+self.name_enter.get()+'.py')
+
             filetext = f.read()
             f.close()
             f = True
@@ -667,31 +669,6 @@ class Game:
             msg.grid(row=1,rowspan=2,column=1,columnspan=2)
             ok_btn = Button(please_place,text='OK',width=6,command=lambda:self.scrdestroy(please_place))
             ok_btn.grid(row=3,column=1,columnspan=2)
-            
-##            self.build_workers[i+self.blist_first] = False
-##            self.place_pop -= 10
-##            self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
-##            self.build_active[1] -= 1
-##            self.build_list[i].configure(bg=self.bgcolor)
-##        elif building == 'Sawmill' and self.pop - self.place_pop >= 10:
-##            self.build_workers[i+self.blist_first] = True
-##            self.place_pop += 10
-##            self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
-##            self.build_active[1] += 1
-##            self.build_list[i].configure(bg='lightgray')
-        
-##        if building == 'Mine' and self.build_workers[i+self.blist_first]:
-##            self.build_workers[i+self.blist_first] = False
-##            self.place_pop -= 10
-##            self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
-##            self.build_active[2] -= 1
-##            self.build_list[i].configure(bg=self.bgcolor)
-##        elif building == 'Mine' and self.pop - self.place_pop >= 10:
-##            self.build_workers[i+self.blist_first] = True
-##            self.place_pop += 10
-##            self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
-##            self.build_active[2] += 1
-##            self.build_list[i].configure(bg='lightgray')
 
         if building == '^':
             self.blist_first -= 8
@@ -740,10 +717,6 @@ class Game:
                     mod_remove.append('W')
                 else:
                     mod_remove.append('I')
-##            if self.build_workers[i+self.blist_first] and self.build_all[i+self.blist_first] != 'Granary' and self.place_pop > self.pop:
-##                self.build_workers[i+self.blist_first] = False
-##                self.place_pop -= 10
-##                self.build_list[i].configure(bg=self.bgcolor)
             elif self.place_pop <= self.pop:
                 break
         for row in range(10):
@@ -1053,7 +1026,6 @@ class Game:
         if self.place_pop > self.pop:
             self.remove_workers()
         
-##        self.pop = self.pop + int(self.food/5)
         for i in range(self.food):
             if self.food >= 4+i**2:
                 self.pop += 1
