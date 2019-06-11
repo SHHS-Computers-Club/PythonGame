@@ -780,7 +780,6 @@ class Game:
         rsc = str(self.grid[row][col])[2]
         mod = int(str(self.grid[row][col])[-1])
         sta = int(str(self.grid[row][col])[0])
-        print(rsc,mod,sta)
         if self.reveal_grid[row][col]:
             if self.placing:
                 self.placing = False
@@ -793,9 +792,7 @@ class Game:
                         for i in range(len(self.build_all)):
                             if self.build_all[i] == 'Sawmill' and not self.build_workers[i]:
                                 self.build_workers[i] = True
-                                print(i,self.blist_first)
                                 if i >= self.blist_first and i - self.blist_first < 8:
-                                    print(i-self.blist_first)
                                     self.build_list[i-self.blist_first].configure(background='lightgray')
                                 break
                             
@@ -824,9 +821,7 @@ class Game:
                         for i in range(len(self.build_all)):
                             if self.build_all[i] == 'Sawmill' and self.build_workers[i]:
                                 self.build_workers[i] = False
-                                print(i,self.blist_first)
                                 if i >= self.blist_first and i - self.blist_first < 8:
-                                    print(i-self.blist_first)
                                     self.build_list[i-self.blist_first].configure(background=self.bgcolor)
                                 break
                     elif rsc == 'I':
@@ -837,9 +832,7 @@ class Game:
                         for i in range(len(self.build_all)):
                             if self.build_all[i] == 'Mine' and self.build_workers[i]:
                                 self.build_workers[i] = False
-                                print(i,self.blist_first)
                                 if i >= self.blist_first and i - self.blist_first < 8:
-                                    print(i-self.blist_first)
                                     self.build_list[i-self.blist_first].configure(background=self.bgcolor)
                                 break
                             
