@@ -57,6 +57,7 @@ ARandomGame is a turn-based game in which the player collects resources and... w
 * The calculations do not automatically update. They will update when you click the `Refresh` button.
 ### Buildings
 * You can build Granaries, Sawmills, and Mines. They boost your respective abilities to gain Food, Wood, and Iron.
+* You can build a building by pressing the `Confirm Build` button, which should turn grey. If it is grey when you press `End Turn`, you will receive that building, provided you have the necessary materials.
 * Granaries add an extra "turn" to your food list; in other words, it takes an extra turn before your food spoils.
 * Sawmills can modify a Wood tile currently yielding less than 3 Wood (the top number plus the bottom modifier). Each sawmill yields +1 Wood.
 * Mines do the same as Sawmills, except for Iron.
