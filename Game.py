@@ -195,10 +195,12 @@ class Game:
         save_ok = Button(self.savescreen,text='Save',command=self.confsave)
         save_ok.grid(row=2,column=2,sticky='NEWS')
 
-    def load(self):
+    def load(self,*args):
         self.loadscreen = Tk()
         self.loadscreen.title('Load')
         self.loadscreen.resizable(width=False,height=False)
+        for i in args:
+            self.scrdestroy(i)
 
         name_lbl = Label(self.loadscreen,text='File name:',width=10)
         name_lbl.grid(row=1,column=1)
@@ -500,13 +502,13 @@ class Game:
         if show and not self.turnend:
             self.conv_error_lbl.grid_forget()
             if trading == 'Food':
-                self.r_rsc = [int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.45*t_qty*0.9),int(0.45*t_qty*1.1),int(0.18*t_qty*0.9),int(0.18*t_qty*1.1),int(0.009*t_qty*0.9),int(0.009*t_qty*1.1)]
+                self.r_rsc = [int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.45*t_qty*0.9),int(0.45*t_qty*1.1),int(0.18*t_qty*0.9),int(0.18*t_qty*1.1),int(0.045*t_qty*0.9),int(0.045*t_qty*1.1)]
             elif trading == 'Wood':
-                self.r_rsc = [int(1.8*t_qty*0.9),int(1.8*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.36*t_qty*0.9),int(0.36*t_qty*1.1),int(0.018*t_qty*0.9),int(0.018*t_qty*1.1)]
+                self.r_rsc = [int(1.8*t_qty*0.9),int(1.8*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.36*t_qty*0.9),int(0.36*t_qty*1.1),int(0.09*t_qty*0.9),int(0.09*t_qty*1.1)]
             elif trading == 'Iron':
-                self.r_rsc = [int(4.5*t_qty*0.9),int(4.5*t_qty*1.1),int(2.25*t_qty*0.9),int(2.25*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.045*t_qty*0.9),int(0.045*t_qty*1.1)]
+                self.r_rsc = [int(4.5*t_qty*0.9),int(4.5*t_qty*1.1),int(2.25*t_qty*0.9),int(2.25*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1),int(0.225*t_qty*0.9),int(0.225*t_qty*1.1)]
             else:
-                self.r_rsc = [int(90*t_qty*0.9),int(90*t_qty*1.1),int(45*t_qty*0.9),int(45*t_qty*1.1),int(18*t_qty*0.9),int(18*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1)]
+                self.r_rsc = [int(18*t_qty*0.9),int(18*t_qty*1.1),int(9*t_qty*0.9),int(9*t_qty*1.1),int(3.6*t_qty*0.9),int(3.6*t_qty*1.1),int(0.9*t_qty*0.9),int(0.9*t_qty*1.1)]
             for neg in range(len(self.r_rsc)):
                 if self.r_rsc[neg] < 0:
                     self.r_rsc[neg] = 0
@@ -545,19 +547,19 @@ class Game:
             self.build_info_desc.configure(text='Allows food to be kept\nlonger.')
             self.build_info_cost_1.configure(text='Wood: '+str(300+50*self.buildings[0]))
             self.build_info_cost_2.configure(text='Iron: '+str(150+50*self.buildings[0]))
-            self.build_info_cost_3.configure(text='Gold: '+str(int(50+50*self.buildings[0]*(1.04**self.turn))))
+            self.build_info_cost_3.configure(text='Gold: '+str(int(50*(self.buildings[0]+1)*(1.04**(0.01*self.turn)))))
             show = True
         elif building == 'Sawmill':
             self.build_info_desc.configure(text='Allows more wood to be\ncollected on one tile.')
             self.build_info_cost_1.configure(text='Wood: '+str(100+50*self.buildings[1]))
             self.build_info_cost_2.configure(text='Iron: '+str(150+50*self.buildings[1]))
-            self.build_info_cost_3.configure(text='Gold: '+str(int(50+50*self.buildings[1]*(1.04**self.turn))))
+            self.build_info_cost_3.configure(text='Gold: '+str(int(50*(self.buildings[1]+1)*(1.04**(0.01*self.turn)))))
             show = True
         elif building == 'Mine':
             self.build_info_desc.configure(text='Allows more iron to be\ncollected on one tile.')
             self.build_info_cost_1.configure(text='Wood: '+str(400+50*self.buildings[2]))
             self.build_info_cost_2.configure(text='Iron: '+str(200+50*self.buildings[2]))
-            self.build_info_cost_3.configure(text='Gold: '+str(int(50+50*self.buildings[2]*(1.04**self.turn))))
+            self.build_info_cost_3.configure(text='Gold: '+str(int(50*(self.buildings[2]+1)*(1.04**(0.01*self.turn)))))
             show = True
         if show:
             self.build_info_desc.grid(row=6,column=13,columnspan=2)
@@ -707,7 +709,7 @@ class Game:
         
     def remove_workers(self):
         mod_remove = []
-        for i in range(len(self.build_workers)):
+        for i in range(len(self.build_workers)): #mark sawmills & mines for deactivation (not enough population)
             if self.build_workers[i] and self.build_all[i] != 'Granary' and self.place_pop > self.pop:
                 self.build_workers[i] = False
                 self.place_pop -= 10
@@ -715,11 +717,13 @@ class Game:
                     self.build_list[i-self.blist_first].configure(bg=self.bgcolor)
                 if self.build_all[i] == 'Sawmill':
                     mod_remove.append('W')
+                    self.build_active[1] -= 1
                 else:
                     mod_remove.append('I')
+                    self.build_active[2] -= 1
             elif self.place_pop <= self.pop:
                 break
-        for row in range(10):
+        for row in range(10): #remove workers from wood & iron tiles
             for col in range(10):
                 if self.worker_grid[row][col] and self.place_pop > self.pop:
                     if str(self.grid[row][col])[2] != 'F':
@@ -728,14 +732,14 @@ class Game:
                         self.place_pop -= 1
                 elif self.place_pop <= self.pop:
                     break
-        for i in range(len(self.build_workers)):
+        for i in range(len(self.build_workers)): #remove workers from buildings
             if self.build_workers[i+self.blist_first] and self.place_pop > self.pop:
                 self.build_workers[i+self.blist_first] = False
                 self.place_pop -= 5
                 self.build_list[i].configure(bg=self.bgcolor)
             elif self.place_pop <= self.pop:
                 break
-        for row in range(10):
+        for row in range(10): #remove workers from any still-populated tiles
             for col in range(10):
                 if self.worker_grid[row][col] and self.place_pop > self.pop:
                     self.worker_grid[row][col] = False
@@ -743,7 +747,7 @@ class Game:
                     self.place_pop -= 1
                 elif self.place_pop <= self.pop:
                     break
-        for row in range(10):
+        for row in range(10): #remove tile modifications from buildings
             for col in range(10):
                 rsc,mod = self.grid[row][col][2],int(self.grid[row][col][-1])
                 for i in range(2):
@@ -803,7 +807,7 @@ class Game:
                         self.build_active[2] += 1
                         self.place_pop += 10
                         for i in range(len(self.build_all)):
-                            if sulf.build_all[i] == 'Mine' and not self.build_workers[i]:
+                            if self.build_all[i] == 'Mine' and not self.build_workers[i]:
                                 self.build_workers[i] = True
                                 if i >= self.blist_first and i - self.blist_first < 8:
                                     self.build_list[i-self.blist_first].configure(background='lightgray')
@@ -839,13 +843,13 @@ class Game:
             elif self.place_pop < self.pop and not self.worker_grid[row][col]:
                 self.worker_grid[row][col] = True
                 self.place_pop += 1
-                self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 event.widget.configure(background='lightgray')
             elif self.worker_grid[row][col]:
                 self.worker_grid[row][col] = False
                 self.place_pop -= 1
-                self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 event.widget.configure(background=self.bgcolor)
+            
+            self.pop_lbl.configure(text='Pop: '+str(self.pop)+' ('+str(self.place_pop)+')')
                 
     def trade(self):
         trading = self.trade_lbl.get()
@@ -870,7 +874,7 @@ class Game:
             ## Food = 1 Unit
             ## Wood = 2 Units
             ## Iron = 5 Units
-            ## Gold = 100 Units
+            ## Gold = 20 Units
             ## "TAX" = -10% on conversion
             ### KEY ###
             
@@ -883,7 +887,7 @@ class Game:
                 elif receiving == 'Iron':
                     multiplier = 0.18
                 else:
-                    multiplier = 0.009
+                    multiplier = 0.045
             elif trading == 'Wood':
                 rsc_qty = self.wood
                 if receiving == 'Food':
@@ -893,7 +897,7 @@ class Game:
                 elif receiving == 'Iron':
                     multiplier = 0.36
                 else:
-                    multiplier = 0.018
+                    multiplier = 0.09
             elif trading == 'Iron':
                 rsc_qty = self.iron
                 if receiving == 'Food':
@@ -903,15 +907,15 @@ class Game:
                 elif receiving == 'Iron':
                     multiplier = 0.9
                 else:
-                    multiplier = 0.045
+                    multiplier = 0.225
             else:
                 rsc_qty = self.gold
                 if receiving == 'Food':
-                    multiplier = 90
-                elif receiving == 'Wood':
-                    multiplier = 45
-                elif receiving == 'Iron':
                     multiplier = 18
+                elif receiving == 'Wood':
+                    multiplier = 9
+                elif receiving == 'Iron':
+                    multiplier = 3.6
                 else:
                     multiplier = 0.9
             true_qty = randint((int(multiplier*t_qty*0.9)),(int(multiplier*t_qty*1.1)))
@@ -926,7 +930,7 @@ class Game:
             if trading == 'Food' and t_qty <= self.food:
                 self.food = self.food - t_qty
                 for i in range(len(self.food_list)):
-                    if t_qty <= self.food_list[i]:
+                    if t_qty <= sum(self.food_list[i]):
                         self.food_list[i].append(0-t_qty)
                     else:
                         t_qty = t_qty - sum(self.food_list[i])
@@ -1031,8 +1035,9 @@ class Game:
             gover = Label(overscreen,text='Game Over!',width=20,height=3)
             gover.grid(row=1,column=1,columnspan=2)
             gquit = Button(overscreen,text='Quit',command=lambda:self.closeall([overscreen]))
+            self.frame.grid_forget()
             gquit.grid(row=2,column=1,sticky='SEWN')
-            gload = Button(overscreen,text='Load',command=self.load)
+            gload = Button(overscreen,text='Load',command=lambda:self.load(overscreen))
             gload.grid(row=2,column=2,sticky='SEWN')
             self.game = False
         
